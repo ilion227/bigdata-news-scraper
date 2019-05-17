@@ -4,12 +4,24 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var mongoose = require('mongoose');
 var sassMiddleware = require('node-sass-middleware');
+var hbs = require('express-handlebars');
 
-var indexRouter = require('./routes/index');
+var hbsHelpers = require('./public/javascripts/helpers.js');
+
+var articlesRouter = require('./routes/articles');
 var usersRouter = require('./routes/users');
 var scraperRouter = require('./routes/scraper');
 
 var app = express();
+
+app.set('view engine', 'hbs');
+app.engine('hbs', hbs({
+  extname: 'hbs',
+  defaultView: 'main.hbs',
+  helpers: hbsHelpers,
+  layoutsDir: __dirname + '/views/layouts/',
+  partialsDir: __dirname + '/views/partials/',
+}));
 
 app.use(logger('dev'));
 app.use(express.json());
@@ -25,7 +37,7 @@ app.use(
 );
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
+app.use('/articles', articlesRouter);
 app.use('/users', usersRouter);
 app.use('/scraper', scraperRouter);
 

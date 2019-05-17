@@ -1,0 +1,23 @@
+<article>
+    {{#each article}}
+        <h2><a href="{{this.url}}" target="_blank">{{this.data.title}}</a></h2>
+        <div class="article-head">
+            <div>
+                <span>{{this.data.info}}</span>
+            </div>
+            <div>
+                <span>Avtor: {{this.data.author}}</span>
+            </div>
+            <div>
+                <span>Predviden čas branja: {{this.data.reading_time}}</span>
+            </div>
+        </div>
+        <hr>
+        <div class="article-summary">
+            {{this.data.summary}}
+        </div>
+        <div class="article-content">
+            {{{this.data.content}}}
+        </div>
+    {{/each}}
+</article>

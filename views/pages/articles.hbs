@@ -1,0 +1,22 @@
+<div class="articles-container">
+    {{#each articles}}
+        <a href="/articles/{{this._id}}">
+            <article class="article-container">
+                <div class="article-image">
+                    <img src="{{this.images.[0]}}" alt="Cover image">
+                </div>
+                <div class="article-data">
+                    <h2 class="article-title">{{this.title}}</h2>
+                    <small>{{splitInfo this.data.info 0}}</small>
+                    <hr>
+                    {{#if this.shortTitle}}
+                        <div>
+                            <span class="article-short-title">{{this.shortTitle}}</span>
+                        </div>
+                    {{/if}}
+                    <p class="article-summary">{{this.shortDescription}}</p>
+                </div>
+            </article>
+        </a>
+    {{/each}}
+</div>

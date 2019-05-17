@@ -36,13 +36,6 @@ router.get('/', function(req, res, next) {
 });
 
 /* GET scraper info. */
-router.get('/:id', function(req, res, next) {
-  Article.find({_id: req.params.id}, async function(err, articles) {
-    res.send(articles);
-  });
-});
-
-/* GET scraper info. */
 async function scrapeSingle(url) {
   const browser = await puppeteer.launch();
 
@@ -82,6 +75,7 @@ async function scrapeSingle(url) {
   await browser.close();
   return result;
 }
+
 router.get('/run', function(req, res, next) {
   (async () => {
     const browser = await puppeteer.launch();
