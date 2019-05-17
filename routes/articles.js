@@ -12,9 +12,9 @@ router.get('/', async function(req, res, next) {
 
 /* GET scraper info. */
 router.get('/:id', async function(req, res, next) {
-  const article = await Article.find({_id: req.params.id}).exec();
-
-  res.render('pages/article', {article: article});
+  Article.findById(req.params.id, function(err, article) {
+    res.render('pages/article', {article: article.toObject()});
+  });
 });
 
 module.exports = router;

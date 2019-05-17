@@ -14,21 +14,32 @@ body
   .article-container
     box-shadow: 1px 2px 2px #AFAFAF
     margin: 10px
-    width: 300px
-    height: 300px
+    width: 360px
+    height: 360px
     color: #232323
 
+    .article-image
+      position: relative
+
+      img
+        max-height: 175px
+        width: 100%
+
+      .article-short-title
+        position: absolute
+        top: 10px
+        left: 10px
+        padding: 2px 8px
+        font-weight: 800
+        font-size: 0.75em
+        color: #eee
+        background-color: #3f4bd6
+
     .article-data
-      padding: 10px
+      padding: 5px 10px
 
       .article-title
         font-size: 16px
-
-      .article-short-title
-        padding: 2px 8px
-        font-weight: 600
-        color: #eee
-        background-color: #3f4bd6
 
       .article-summary
         text-align: justify
