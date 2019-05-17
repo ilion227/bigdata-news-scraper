@@ -16,16 +16,72 @@ const WEBSITES = [
       newsListItem: {
         selector: '.news-list__item',
       },
+      article: {
+        title: '.article__title',
+        info: '.article__info',
+        reading_time: '.article__readingtime-time',
+        author: '.article__details-main a',
+        summary: '.article__summary',
+        content: '.article__body-dynamic.dev-article-contents',
+      },
     },
   },
 ];
+
 /* GET scraper info. */
 router.get('/', function(req, res, next) {
-  Article.find({}, function(err, articles) {
+  Article.find({}, async function(err, articles) {
     res.send(articles);
   });
 });
 
+/* GET scraper info. */
+router.get('/:id', function(req, res, next) {
+  Article.find({_id: req.params.id}, async function(err, articles) {
+    res.send(articles);
+  });
+});
+
+/* GET scraper info. */
+async function scrapeSingle(url) {
+  const browser = await puppeteer.launch();
+
+  let page = await browser.newPage();
+  await page.setViewport({width: 1366, height: 768});
+  await page.goto(url);
+
+  var article_selectors = {
+    title: '.article__title',
+    info: '.article__info',
+    reading_time: '.article__readingtime-time',
+    author: '.article__details-main a',
+    summary: '.article__summary',
+    content: '.article__body-dynamic.dev-article-contents',
+  };
+
+  const result = await page.evaluate(selectors => {
+    const title = document.querySelector(selectors.title).innerText;
+    const info = document.querySelector(selectors.info).innerText;
+    const reading_time = document.querySelector(
+        selectors.reading_time).innerText;
+    const author = document.querySelector(selectors.author).innerText;
+    const summary = document.querySelector(selectors.summary).innerHTML;
+    const content = document.querySelector(selectors.content).innerHTML;
+
+    return {
+      title,
+      info,
+      reading_time,
+      author,
+      summary,
+      content,
+    };
+
+  }, article_selectors);
+
+  await browser.close();
+  return result;
+}
 router.get('/run', function(req, res, next) {
   (async () => {
     const browser = await puppeteer.launch();
@@ -87,14 +143,22 @@ router.get('/run', function(req, res, next) {
         });
       }, selector);
 
-      result.forEach(item => {
+      await result.forEach(async item => {
+        if (item.url.length > 0) {
+          var singleData = await scrapeSingle(item.url);
+        } else {
+          singleData = {};
+        }
+
         var article = new Article({
           url: item.url,
           title: item.title,
           shortTitle: item.shortTitle,
           shortDescription: item.shortDescription,
           images: item.images,
+          data: singleData,
         });
+
         article.save((err, article) => {
           if (err) return console.error(err);
           console.log('Created Article!', article);
@@ -104,7 +168,7 @@ router.get('/run', function(req, res, next) {
       console.log('Parser stopped!');
 
       await browser.close();
-      res.json(result);
+      res.redirect('/scraper');
     });
   })();
 });
