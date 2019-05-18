@@ -58,7 +58,7 @@ router.get('/', function(req, res, next) {
 	});
 });
 
-async function scrapeWebsites() {
+router.get('/run', async function(req, res, next) {
 	(async () => {
 		for (let i = 0; i < WEBSITES.length; i++) {
 			let website = WEBSITES[i];
@@ -208,10 +208,6 @@ async function scrapeWebsites() {
 			await browser.close();
 		}
 	})();
-}
-
-router.get('/run', async function(req, res, next) {
-	await scrapeWebsites();
 
 	res.redirect('/articles');
 });
