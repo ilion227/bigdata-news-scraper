@@ -11,12 +11,14 @@
             <span>Predviden čas branja: {{article.meta.readingTime}}</span>
         </div>
     </div>
-    <img src="{{article.images.[3]}}" alt="Main image" class="article-main-image">
+    <img src="{{getBestImage article.images}}" alt="Main image" class="article-main-image">
     <hr>
-    <div class="article-summary">
-        {{article.summary}}
-    </div>
-    <div class="article-content">
-        {{{article.content}}}
+    <div class="article-body">
+        <div class="article-summary">
+            {{article.summary}}
+        </div>
+        <div class="article-content">
+            {{{article.content}}}
+        </div>
     </div>
 </article>
