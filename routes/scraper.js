@@ -11,14 +11,14 @@ const WEBSITES = [
 		name: '24ur',
 		url: 'https://www.24ur.com/',
 		selectors: {
-			newsList: {
-				selector: '.news-list',
-			},
-			newsListItem: {
-				selector: '.news-list__item',
-			},
+			newsList: '.news-list',
+			newsListItem: '.news-list__item',
 			article: {
-				title: '.article__title',
+				title: '.card__title-inside',
+				thumbnailTag: '.card__label.label.label--card',
+				thumbnailDescription: '.card__summary',
+				url: '.card',
+				images: 'picture source',
 				info: '.article__info',
 				readingTime: '.article__readingtime-time',
 				author: '.article__details-main a',
@@ -41,15 +41,15 @@ async function scrapeWebsite(website) {
 	console.log('Launched!');
 
 	WEBSITES.forEach(async website => {
+		let selectors = website.selectors;
+
 		console.log('Scraping:', website.url);
 
 		let page = await browser.newPage();
 		await page.setViewport({width: 1366, height: 768});
 		await page.goto(website.url, {waitUntil: 'networkidle0'});
 
-		let selector = `.box .grid div${website.selectors.newsList.selector} div${
-				website.selectors.newsListItem.selector
-				}`;
+		let selector = `.box .grid div${selectors.newsList} div${selectors.newsListItem}`;
 		await page.waitForSelector(selector);
 
 		await page.evaluate(async () => {
@@ -74,29 +74,27 @@ async function scrapeWebsite(website) {
 			});
 		});
 
-		console.log('Scrape main');
-
 		let results = [];
-
 		let elements = await page.$$(selector);
 
 		for (let i = 0; i < elements.length; i++) {
 			let element = elements[i];
-			let title = await element.$eval(('.card__title-inside'), node => node.innerText.trim());
+			let title = await element.$eval(selectors.article.title, node => node.innerText.trim());
 
 			let thumbnailTag = null;
-			if (await element.$(('.card__label.label.label--card')) !== null) {
-				thumbnailTag = await element.$eval(('.card__label.label.label--card'), node => node.innerText.trim());
+			if (await element.$(selectors.article.thumbnailTag) !== null) {
+				thumbnailTag = await element.$eval(selectors.article.thumbnailTag, node => node.innerText.trim());
 			}
 
 			let thumbnailDescription = null;
-			if (await element.$(('.card__summary')) !== null) {
-				thumbnailDescription = await element.$eval(('.card__summary'), node => node.innerText.trim());
+			if (await element.$(selectors.article.thumbnailDescription) !== null) {
+				thumbnailDescription = await element.$eval(selectors.article.thumbnailDescription,
+						node => node.innerText.trim());
 			}
-			let url = await element.$eval(('.card'), node => node.href);
+			let url = await element.$eval(selectors.article.url, node => node.href);
 			if (!url) continue;
 
-			let images = await element.$$eval(('picture source'), nodes => {
+			let images = await element.$$eval(selectors.article.images, nodes => {
 				let sources = [];
 				for (let i = 0; i < nodes.length; i++) {
 					sources.push(nodes[i].getAttribute('srcset'));
@@ -104,7 +102,7 @@ async function scrapeWebsite(website) {
 				return sources;
 			});
 
-			article = new Article({
+			results.push(new Article({
 				title,
 				url,
 				images,
@@ -112,11 +110,8 @@ async function scrapeWebsite(website) {
 					thumbnailTag,
 					thumbnailDescription,
 				},
-			});
-
-			results.push(article);
+			}));
 		}
-		console.log('RESULTS', results);
 
 		// New browser page for single links
 		page = await browser.newPage();
@@ -125,17 +120,15 @@ async function scrapeWebsite(website) {
 		for (let i = 0; i < results.length; i++) {
 			let article = results[i];
 
-			let selectors = website.selectors.article;
-
 			console.log('Parse single', article.url);
 
 			await page.goto(article.url, {waitUntil: 'networkidle0'});
 
-			const info = await page.$eval(selectors.info, node => node.innerText.trim());
-			const readingTime = await page.$eval(selectors.readingTime, node => node.innerText.trim());
-			const author = await page.$eval(selectors.author, node => node.innerText.trim());
-			const summary = await page.$eval(selectors.summary, node => node.innerHTML);
-			const content = await page.$eval(selectors.content, node => node.innerHTML);
+			const info = await page.$eval(selectors.article.info, node => node.innerText.trim());
+			const readingTime = await page.$eval(selectors.article.readingTime, node => node.innerText.trim());
+			const author = await page.$eval(selectors.article.author, node => node.innerText.trim());
+			const summary = await page.$eval(selectors.article.summary, node => node.innerHTML);
+			const content = await page.$eval(selectors.article.content, node => node.innerHTML);
 
 			// Parse article's info
 			let infoArr = info.split('|');
@@ -153,23 +146,20 @@ async function scrapeWebsite(website) {
 
 			let countArticles = await Article.countDocuments(
 					{'title': article.title}).exec();
-			console.log('COUNT', countArticles);
 			if (countArticles) {
-				console.log('Exists!');
 				continue;
 			}
 
 			article.save((err, article) => {
 				if (err) return console.error(err);
-				console.log('Created Article!');
 			});
 		}
 		await browser.close();
 	});
 }
 
-router.get('/run', function(req, res, next) {
-	scrapeWebsite(WEBSITES[0]);
+router.get('/run', async function(req, res, next) {
+	await scrapeWebsite(WEBSITES[0]);
 
 	res.redirect('/articles');
 });

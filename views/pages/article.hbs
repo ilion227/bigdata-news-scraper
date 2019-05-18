@@ -1,21 +1,22 @@
-<article>
-    <h2><a href="{{article.url}}" target="_blank">{{article.data.title}}</a></h2>
+<article class="single-article">
+    <h2><a href="{{article.url}}" target="_blank">{{article.title}}</a></h2>
     <div class="article-head">
         <div>
-            <span>{{article.data.info}}</span>
+            <span>{{formatDate article.meta.publishedAt}} | {{article.meta.modifiedAt}}</span>
         </div>
         <div>
-            <span>Avtor: {{article.data.author}}</span>
+            <span>AVTOR: {{article.author}}</span>
         </div>
         <div>
-            <span>Predviden čas branja: {{article.data.reading_time}}</span>
+            <span>Predviden čas branja: {{article.meta.readingTime}}</span>
         </div>
     </div>
+    <img src="{{article.images.[3]}}" alt="Main image" class="article-main-image">
     <hr>
     <div class="article-summary">
-        {{article.data.summary}}
+        {{article.summary}}
     </div>
     <div class="article-content">
-        {{{article.data.content}}}
+        {{{article.content}}}
     </div>
 </article>
