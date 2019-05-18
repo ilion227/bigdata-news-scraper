@@ -1,12 +1,20 @@
-var mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
-var articleSchema = new mongoose.Schema({
-  url: String,
-  title: String,
-  shortTitle: String,
-  shortDescription: String,
-  images: [String],
-  data: Object,
-});
+const articleSchema = new mongoose.Schema({
+	title: String,
+	author: String,
+	summary: String,
+	content: String,
+	url: String,
+	images: [String],
+	meta: {
+		location: String,
+		publishedAt: Date,
+		modifiedAt: String,
+		readingTime: String,
+		thumbnailTag: String,
+		thumbnailDescription: String,
+	},
+}, {timestamps: true});
 
 module.exports = mongoose.model('Article', articleSchema, 'articles');

@@ -5,7 +5,7 @@ var router = express.Router();
 
 /* GET home page. */
 router.get('/', async function(req, res, next) {
-  const articles = await Article.find({}).exec();
+  const articles = await Article.find({}).sort({'data.info': 1}).exec();
 
   res.render('pages/articles', {articles: articles});
 });
