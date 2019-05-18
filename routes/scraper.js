@@ -3,6 +3,7 @@ const puppeteer = require('puppeteer');
 const moment = require('moment');
 
 const Article = require('../models/Article');
+const Website = require('../models/Website');
 
 const router = express.Router();
 
@@ -58,229 +59,132 @@ router.get('/', function(req, res, next) {
 	});
 });
 
+async function getInnerHTML(element, selector) {
+	if (await element.$(selector) !== null) {
+		return await element.$eval(selector, node => node.innerHTML);
+	}
+	return null;
+}
+
+async function getInnerText(element, selector) {
+	if (await element.$(selector) !== null) {
+		return await element.$eval(selector, node => node.innerText.trim());
+	}
+	return null;
+}
+
+async function getAllInnerText(element, selector) {
+	if (await element.$$(selector) !== null) {
+		const values = await element.$$eval(selector, nodes => {
+			let data = [];
+			for (node of nodes) {
+				data.push(node.innerText.trim());
+			}
+			return data;
+		});
+		return values;
+	}
+	return null;
+}
+
 /* GET scraper info. */
 router.get('/pages', function(req, res, next) {
 	(async () => {
+		const browser = await puppeteer.launch({headless: true});
 
 		let results = [];
-		for (let url of [
-			'https://24ur.com',
-			'https://siol.net',
-			'https://maribor24.si',
-			'https://www.delo.si',
-			'https://www.zurnal24.si/']) {
-			console.log('Scraping:', url);
+		Website.find({}, async function(err, websites) {
+			for (let website of websites) {
+				console.log('Scraping:', website.url);
 
-			const browser = await puppeteer.launch({headless: true});
-			console.log('Launched!');
-			let page = await browser.newPage();
-			await page.setViewport({width: 1366, height: 768});
-			await page.goto(url, {waitUntil: 'networkidle0'});
+				console.log('Launched!');
+				let page = await browser.newPage();
+				await page.setViewport({width: 1366, height: 768});
+				await page.goto(website.url, {waitUntil: 'networkidle0'});
 
-			console.log('Scroll page');
-			await page.evaluate(async () => {
-				await new Promise((resolve, reject) => {
-					try {
-						let lastScrollTop = document.scrollingElement.scrollTop;
-						// Scroll to bottom of page until we can't scroll anymore.
-						const scroll = () => {
-							document.scrollingElement.scrollTop += 100;//(viewPortHeight / 2);
-							if (document.scrollingElement.scrollTop !== lastScrollTop) {
-								lastScrollTop = document.scrollingElement.scrollTop;
-								requestAnimationFrame(scroll);
-							} else {
-								resolve();
-							}
-						};
-						scroll();
-					} catch (err) {
-						console.log(err);
-						reject(err.toString());
-					}
-				});
-			});
-
-			let urlResults = await page.evaluate(() => {
-				let data = [];
-				document.querySelectorAll('a').forEach(function(el) {
-					let image = el.querySelector('img');
-					let title = el.querySelector('h1,h2,h3,h4,h5,h6');
-					if (el.href.length === 0 || !image || !title || title.length === 0) return;
-					data.push({title: title.innerText.trim(), link: el.href, image: image.src});
+				await page.evaluate(async () => {
+					await new Promise((resolve, reject) => {
+						try {
+							let lastScrollTop = document.scrollingElement.scrollTop;
+							// Scroll to bottom of page until we can't scroll anymore.
+							const scroll = () => {
+								document.scrollingElement.scrollTop += 100;//(viewPortHeight / 2);
+								if (document.scrollingElement.scrollTop !== lastScrollTop) {
+									lastScrollTop = document.scrollingElement.scrollTop;
+									requestAnimationFrame(scroll);
+								} else {
+									resolve();
+								}
+							};
+							scroll();
+						} catch (err) {
+							console.log(err);
+							reject(err.toString());
+						}
+					});
 				});
 
-				return data;
-			});
+				let urlResults = await page.evaluate(() => {
+					let data = [];
+					document.querySelectorAll('a').forEach(function(el) {
+						let image = el.querySelector('img');
+						let title = el.querySelector('h1,h2,h3,h4,h5,h6');
+						if (el.href.length === 0 || !image || !title || title.innerText.trim().length === 0) return;
+						data.push({title: title.innerText.trim(), link: el.href, image: image.src});
+					});
 
-			console.log('Fetched ' + urlResults.length + ' entries.');
+					return data;
+				});
 
-			results.push({
-				url: url,
-				data: urlResults,
-			});
-		}
-		const fs = require('fs');
-		fs.writeFile('all_data.json', JSON.stringify(results), function(err) {
-			if (err) {
-				return console.log(err);
+				website.links = urlResults.map((result) => {
+					return result.link;
+				});
+				website.save();
+
+				console.log('Fetched ' + urlResults.length + ' entries.');
+				for (let i = 0; i < urlResults.length; i++) {
+					let entry = urlResults[i];
+					await page.goto(entry.link, {waitUntil: 'networkidle0'});
+					let tags = await getAllInnerText(page, website.selectors.tags);
+					let author = await getInnerText(page, website.selectors.author);
+					let info = await getInnerText(page, website.selectors.info);
+					let summary = await getInnerHTML(page, website.selectors.summary);
+					let content = await getInnerHTML(page, website.selectors.content);
+
+					/*
+					Site specific scraping
+					let location = null;
+					let publishedAt = null;
+					let modifiedAt = null;
+
+					if (website.name == '24ur') {
+						let infoArr = info.split('|');
+						let locationAndDate = infoArr[0].split(',');
+						location = locationAndDate[0];
+						let datetime = locationAndDate[1] + ' ' + locationAndDate[2];
+
+						publishedAt = moment(datetime, 'DD.MM.YYYY hh:mm').toDate();
+						modifiedAt = infoArr[1];
+					 */
+					Article.create({
+						site: website.url,
+						url: entry.link,
+						title: entry.title,
+						mainImage: entry.image,
+						author: author,
+						info: info,
+						tags: tags,
+						summary: summary,
+						content: content,
+					}, function(err, article) {
+						if (err) return console.log(err);
+					});
+
+					urlResults[i] = {...entry, tags, author, info, summary, content};
+				}
 			}
 		});
 	})();
 	res.json({status: 'Scraping...'});
 });
-
-router.get('/run', async function(req, res, next) {
-	(async () => {
-		for (let i = 0; i < WEBSITES.length; i++) {
-			let website = WEBSITES[i];
-			let selectors = website.selectors;
-			console.log('Scraping:', website.url);
-
-			const browser = await puppeteer.launch({headless: true});
-			console.log('Launched!');
-			let page = await browser.newPage();
-			await page.setViewport({width: 1366, height: 768});
-			await page.goto(website.url, {waitUntil: 'networkidle0'});
-
-			let selector = null;
-			if (website.name == '24ur') {
-				selector = `.box .grid div${selectors.newsList} div${selectors.newsListItem}`;
-			} else {
-				selector = `${selectors.newsList} ${selectors.newsListItem}`;
-			}
-			await page.waitForSelector(selector);
-
-			console.log('Scroll page');
-			await page.evaluate(async () => {
-				await new Promise((resolve, reject) => {
-					try {
-						let lastScrollTop = document.scrollingElement.scrollTop;
-						// Scroll to bottom of page until we can't scroll anymore.
-						const scroll = () => {
-							document.scrollingElement.scrollTop += 100;//(viewPortHeight / 2);
-							if (document.scrollingElement.scrollTop !== lastScrollTop) {
-								lastScrollTop = document.scrollingElement.scrollTop;
-								requestAnimationFrame(scroll);
-							} else {
-								resolve();
-							}
-						};
-						scroll();
-					} catch (err) {
-						console.log(err);
-						reject(err.toString());
-					}
-				});
-			});
-
-			let results = [];
-			let elements = await page.$$(selector);
-
-			console.log('Begin scraping', elements.length);
-			for (let i = 0; i < elements.length; i++) {
-				let element = elements[i];
-				let title = null;
-				if (await element.$(selectors.article.title) !== null) {
-					title = await element.$eval(selectors.article.title, node => node.innerText.trim());
-				}
-
-				let thumbnailTag = null;
-				if (await element.$(selectors.article.thumbnailTag) !== null) {
-					thumbnailTag = await element.$eval(selectors.article.thumbnailTag, node => node.innerText.trim());
-				}
-
-				let thumbnailDescription = null;
-				if (await element.$(selectors.article.thumbnailDescription) !== null) {
-					thumbnailDescription = await element.$eval(selectors.article.thumbnailDescription,
-							node => node.innerText.trim());
-				}
-				let url = await element.$eval(selectors.article.url, node => node.href);
-				if (url.indexOf('neo.io') > -1) continue;
-
-				let images = await element.$$eval(selectors.article.images, (nodes, {prependDomain, url}) => {
-					let sources = [];
-					for (let i = 0; i < nodes.length; i++) {
-						let imageUrl = nodes[i].getAttribute('srcset');
-						if (prependDomain) {
-							imageUrl = url + imageUrl;
-						}
-						sources.push(imageUrl);
-					}
-					return sources;
-				}, {prependDomain: website.prependDomain, url: website.url});
-
-				results.push(new Article({
-					site: website.name,
-					title,
-					url,
-					images,
-					meta: {
-						thumbnailTag,
-						thumbnailDescription,
-					},
-				}));
-
-				if (results.length >= MAX_ARTICLES) break;
-			}
-
-			console.log('Parse articles', results.length);
-
-			// New browser page for single links
-			page = await browser.newPage();
-			await page.setViewport({width: 1366, height: 768});
-
-			for (let i = 0; i < results.length; i++) {
-				let article = results[i];
-
-				console.log('Parse single', article.url);
-
-				await page.goto(article.url, {waitUntil: 'networkidle0'});
-
-				const info = await page.$eval(selectors.article.info, node => node.innerText.trim());
-
-				let readingTime = null;
-				if (website.name == '24ur') {
-					readingTime = await page.$eval(selectors.article.readingTime, node => node.innerText.trim());
-				}
-				const author = await page.$eval(selectors.article.author, node => node.innerText.trim());
-				const summary = await page.$eval(selectors.article.summary, node => node.innerHTML);
-				const content = await page.$eval(selectors.article.content, node => node.innerHTML);
-
-				// Parse article's info
-				let location = null;
-				let publishedAt = null;
-				let modifiedAt = null;
-
-				if (website.name == '24ur') {
-					let infoArr = info.split('|');
-					let locationAndDate = infoArr[0].split(',');
-					location = locationAndDate[0];
-					let datetime = locationAndDate[1] + ' ' + locationAndDate[2];
-
-					publishedAt = moment(datetime, 'DD.MM.YYYY hh:mm').toDate();
-					modifiedAt = infoArr[1];
-				}
-
-				article.author = author;
-				article.summary = summary;
-				article.content = content;
-				article.meta = {...article.meta, location, publishedAt, modifiedAt, readingTime};
-
-				let countArticles = await Article.countDocuments(
-						{'title': article.title}).exec();
-				if (countArticles) {
-					continue;
-				}
-
-				article.save((err, article) => {
-					if (err) return console.error(err);
-				});
-			}
-			await browser.close();
-		}
-	})();
-
-	res.redirect('/articles');
-});
-
 module.exports = router;
