@@ -58,6 +58,77 @@ router.get('/', function(req, res, next) {
 	});
 });
 
+/* GET scraper info. */
+router.get('/pages', function(req, res, next) {
+	(async () => {
+
+		let results = [];
+		for (let url of [
+			'https://24ur.com',
+			'https://siol.net',
+			'https://maribor24.si',
+			'https://www.delo.si',
+			'https://www.zurnal24.si/']) {
+			console.log('Scraping:', url);
+
+			const browser = await puppeteer.launch({headless: true});
+			console.log('Launched!');
+			let page = await browser.newPage();
+			await page.setViewport({width: 1366, height: 768});
+			await page.goto(url, {waitUntil: 'networkidle0'});
+
+			console.log('Scroll page');
+			await page.evaluate(async () => {
+				await new Promise((resolve, reject) => {
+					try {
+						let lastScrollTop = document.scrollingElement.scrollTop;
+						// Scroll to bottom of page until we can't scroll anymore.
+						const scroll = () => {
+							document.scrollingElement.scrollTop += 100;//(viewPortHeight / 2);
+							if (document.scrollingElement.scrollTop !== lastScrollTop) {
+								lastScrollTop = document.scrollingElement.scrollTop;
+								requestAnimationFrame(scroll);
+							} else {
+								resolve();
+							}
+						};
+						scroll();
+					} catch (err) {
+						console.log(err);
+						reject(err.toString());
+					}
+				});
+			});
+
+			let urlResults = await page.evaluate(() => {
+				let data = [];
+				document.querySelectorAll('a').forEach(function(el) {
+					let image = el.querySelector('img');
+					let title = el.querySelector('h1,h2,h3,h4,h5,h6');
+					if (el.href.length === 0 || !image || !title || title.length === 0) return;
+					data.push({title: title.innerText.trim(), link: el.href, image: image.src});
+				});
+
+				return data;
+			});
+
+			console.log('Fetched ' + urlResults.length + ' entries.');
+
+			results.push({
+				url: url,
+				data: urlResults,
+			});
+		}
+		const fs = require('fs');
+		fs.writeFile('all_data.json', JSON.stringify(results), function(err) {
+			if (err) {
+				return console.log(err);
+			}
+		});
+	})();
+	res.json({status: 'Scraping...'});
+});
+
 router.get('/run', async function(req, res, next) {
 	(async () => {
 		for (let i = 0; i < WEBSITES.length; i++) {
