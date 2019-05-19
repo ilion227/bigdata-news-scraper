@@ -3,10 +3,8 @@
         <a href="/articles/{{this._id}}">
             <article class="article-container">
                 <div class="article-image">
-                    <img src="{{this.images.[0]}}" alt="Cover image">
-                    {{#if this.meta.thumbnailTag}}
-                        <span class="article-short-title">{{this.meta.thumbnailTag}}</span>
-                    {{/if}}
+                    <img src="{{this.mainImage}}" alt="Cover image">
+                    <span class="article-short-title">{{this.site}}</span>
                 </div>
                 <div class="article-data">
                     <h2 class="article-title">{{this.title}}</h2>

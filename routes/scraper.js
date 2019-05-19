@@ -5,54 +5,10 @@ const moment = require('moment');
 const Article = require('../models/Article');
 const Website = require('../models/Website');
 
+const config = require('../config');
+
 const router = express.Router();
 
-const WEBSITES = [
-	{
-		name: '24ur',
-		url: 'https://www.24ur.com',
-		prependDomain: false,
-		selectors: {
-			newsList: '.news-list',
-			newsListItem: '.news-list__item',
-			article: {
-				title: '.card__title-inside',
-				thumbnailTag: '.card__label.label.label--card',
-				thumbnailDescription: '.card__summary',
-				url: '.card',
-				images: 'picture source',
-				info: '.article__info',
-				readingTime: '.article__readingtime-time',
-				author: '.article__details-main a',
-				summary: '.article__summary',
-				content: '.article__body-dynamic.dev-article-contents',
-			},
-		},
-	},
-	{
-		name: 'SIOL',
-		url: 'https://siol.net',
-		prependDomain: true,
-		selectors: {
-			newsList: '.body_wrap__inner',
-			newsListItem: 'article',
-			article: {
-				title: '.card__title strong',
-				thumbnailTag: '.card__section_line',
-				thumbnailDescription: '.card__section_line',
-				url: '.card__link',
-				images: 'picture source',
-				info: '.article__publish_date--date',
-				readingTime: '.article__update_date',
-				author: '.article__author',
-				summary: '.article__intro p',
-				content: '.article__main',
-			},
-		},
-	},
-];
-let MAX_ARTICLES = 32;
-/* GET scraper info. */
 router.get('/', function(req, res, next) {
 	Article.find({}, async function(err, articles) {
 		res.send(articles);
@@ -90,16 +46,25 @@ async function getAllInnerText(element, selector) {
 /* GET scraper info. */
 router.get('/pages', function(req, res, next) {
 	(async () => {
-		const browser = await puppeteer.launch({headless: true});
+		const browser = await puppeteer.launch({
+			headless: true,
+			args: [
+				'--no-sandbox',
+				'--disable-setuid-sandbox',
+				'--disable-dev-shm-usage',
+				'--disable-accelerated-2d-canvas',
+				'--disable-gpu',
+				'--window-size=1366x768',
+			],
+		});
 
-		let results = [];
+		let articles = [];
 		Website.find({}, async function(err, websites) {
 			for (let website of websites) {
 				console.log('Scraping:', website.url);
 
 				console.log('Launched!');
 				let page = await browser.newPage();
-				await page.setViewport({width: 1366, height: 768});
 				await page.goto(website.url, {waitUntil: 'networkidle0'});
 
 				await page.evaluate(async () => {
@@ -141,10 +106,26 @@ router.get('/pages', function(req, res, next) {
 				});
 				website.save();
 
+				await page.setRequestInterception(true);
+				page.on('request', (request) => {
+					const requestUrl = request._url.split('?')[0].split('#')[0];
+					if (
+							config.blockedResourceTypes.indexOf(request.resourceType()) !== -1 ||
+							config.skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
+					) {
+						request.abort();
+					} else {
+						request.continue();
+					}
+				});
+
 				console.log('Fetched ' + urlResults.length + ' entries.');
 				for (let i = 0; i < urlResults.length; i++) {
+					console.log(`fetching page [${i}]...`);
 					let entry = urlResults[i];
-					await page.goto(entry.link, {waitUntil: 'networkidle0'});
+					await page.goto(entry.link);
+					await page.setUserAgent(config.userAgent);
+
 					let tags = await getAllInnerText(page, website.selectors.tags);
 					let author = await getInnerText(page, website.selectors.author);
 					let info = await getInnerText(page, website.selectors.info);
@@ -166,8 +147,9 @@ router.get('/pages', function(req, res, next) {
 						publishedAt = moment(datetime, 'DD.MM.YYYY hh:mm').toDate();
 						modifiedAt = infoArr[1];
 					 */
-					Article.create({
-						site: website.url,
+
+					let article = new Article({
+						site: website.title,
 						url: entry.link,
 						title: entry.title,
 						mainImage: entry.image,
@@ -176,13 +158,14 @@ router.get('/pages', function(req, res, next) {
 						tags: tags,
 						summary: summary,
 						content: content,
-					}, function(err, article) {
-						if (err) return console.log(err);
 					});
 
-					urlResults[i] = {...entry, tags, author, info, summary, content};
+					articles.push(article);
 				}
 			}
+
+			console.log(`Fetched ${articles.length} articles.`);
+			browser.close();
 		});
 	})();
 	res.json({status: 'Scraping...'});
