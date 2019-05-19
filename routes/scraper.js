@@ -1,6 +1,5 @@
 const express = require('express');
 const puppeteer = require('puppeteer');
-const moment = require('moment');
 
 const Article = require('../models/Article');
 const Website = require('../models/Website');
@@ -8,6 +7,7 @@ const Website = require('../models/Website');
 const config = require('../config');
 
 const router = express.Router();
+let articles = [];
 
 router.get('/', function(req, res, next) {
 	Article.find({}, async function(err, articles) {
@@ -44,130 +44,128 @@ async function getAllInnerText(element, selector) {
 }
 
 /* GET scraper info. */
-router.get('/pages', function(req, res, next) {
-	(async () => {
-		const browser = await puppeteer.launch({
-			headless: true,
-			args: [
-				'--no-sandbox',
-				'--disable-setuid-sandbox',
-				'--disable-dev-shm-usage',
-				'--disable-accelerated-2d-canvas',
-				'--disable-gpu',
-				'--window-size=1366x768',
-			],
-		});
+router.get('/pages', function(req, res) {
+	Website.find({}, async function(err, websites) {
+		(async () => {
+			const startDate = new Date().getTime();
+			const sitePromises = [];
+			for (let i = 0; i < websites.length; i++) {
+				sitePromises.push(new Promise(async (resBrowser) => {
+					let website = websites[i];
+					let browser = await puppeteer.launch(config.launchOptions);
+					const pagePromises = [];
 
-		let articles = [];
-		Website.find({}, async function(err, websites) {
-			for (let website of websites) {
-				console.log('Scraping:', website.url);
+					console.log('Scraping:', website.url);
 
-				console.log('Launched!');
-				let page = await browser.newPage();
-				await page.goto(website.url, {waitUntil: 'networkidle0'});
+					let mainPage = await browser.newPage();
+					await mainPage.goto(website.url, {waitUntil: 'networkidle0'});
+					await mainPage.evaluate(async () => {
+						await new Promise((resolve, reject) => {
+							try {
+								let lastScrollTop = document.scrollingElement.scrollTop;
+								// Scroll to bottom of page until we can't scroll anymore.
+								const scroll = () => {
+									document.scrollingElement.scrollTop += 100;//(viewPortHeight / 2);
+									if (document.scrollingElement.scrollTop !== lastScrollTop) {
+										lastScrollTop = document.scrollingElement.scrollTop;
+										requestAnimationFrame(scroll);
+									} else {
+										resolve();
+									}
+								};
+								scroll();
+							} catch (err) {
+								console.log(err);
+								reject(err.toString());
+							}
+						});
+					});
 
-				await page.evaluate(async () => {
-					await new Promise((resolve, reject) => {
-						try {
-							let lastScrollTop = document.scrollingElement.scrollTop;
-							// Scroll to bottom of page until we can't scroll anymore.
-							const scroll = () => {
-								document.scrollingElement.scrollTop += 100;//(viewPortHeight / 2);
-								if (document.scrollingElement.scrollTop !== lastScrollTop) {
-									lastScrollTop = document.scrollingElement.scrollTop;
-									requestAnimationFrame(scroll);
-								} else {
-									resolve();
+					let articleEntries = await mainPage.evaluate(() => {
+						let data = [];
+						document.querySelectorAll('a').forEach(function(el) {
+							let image = el.querySelector('img');
+							let title = el.querySelector('h1,h2,h3,h4,h5,h6');
+							if (el.href.length === 0 || !image || !title || title.innerText.trim().length === 0) return;
+							data.push({title: title.innerText.trim(), link: el.href, image: image.src});
+						});
+
+						return data;
+					});
+					articleEntries = articleEntries.slice(0, 2);
+					await mainPage.close();
+					console.log('Fetched ' + articleEntries.length + ' entries.');
+
+					for (let numPage = 0; numPage < config.concurrentOperations; numPage++) {
+						pagePromises.push(new Promise(async (resPage) => {
+							while (articleEntries.length > 0) {
+								let entry = articleEntries.pop();
+								console.log(`Visiting url: ${entry.link}`);
+
+								let page = await browser.newPage();
+								await page.setUserAgent(config.userAgent);
+								await page.setRequestInterception(true);
+								page.on('request', (request) => {
+									const requestUrl = request._url.split('?')[0].split('#')[0];
+									if (
+											config.blockedResourceTypes.indexOf(request.resourceType()) !== -1 ||
+											config.skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
+									) {
+										request.abort();
+									} else {
+										request.continue();
+									}
+								});
+
+								try {
+									await page.goto(entry.link);
+									let tags = await getAllInnerText(page, website.selectors.tags);
+									let author = await getInnerText(page, website.selectors.author);
+									let info = await getInnerText(page, website.selectors.info);
+									let summary = await getInnerHTML(page, website.selectors.summary);
+									let content = await getInnerHTML(page, website.selectors.content);
+
+									articles.push({
+										site: website.title,
+										url: entry.link,
+										title: entry.title,
+										mainImage: entry.image,
+										author: author,
+										info: info,
+										tags: tags,
+										summary: summary,
+										content: content,
+									});
+								} catch (err) {
+									console.log(`An error occured on url: ${entry.link}`);
+								} finally {
+									await page.close();
 								}
-							};
-							scroll();
-						} catch (err) {
-							console.log(err);
-							reject(err.toString());
-						}
-					});
-				});
-
-				let urlResults = await page.evaluate(() => {
-					let data = [];
-					document.querySelectorAll('a').forEach(function(el) {
-						let image = el.querySelector('img');
-						let title = el.querySelector('h1,h2,h3,h4,h5,h6');
-						if (el.href.length === 0 || !image || !title || title.innerText.trim().length === 0) return;
-						data.push({title: title.innerText.trim(), link: el.href, image: image.src});
-					});
-
-					return data;
-				});
-
-				website.links = urlResults.map((result) => {
-					return result.link;
-				});
-				website.save();
-
-				await page.setRequestInterception(true);
-				page.on('request', (request) => {
-					const requestUrl = request._url.split('?')[0].split('#')[0];
-					if (
-							config.blockedResourceTypes.indexOf(request.resourceType()) !== -1 ||
-							config.skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
-					) {
-						request.abort();
-					} else {
-						request.continue();
+							}
+							resPage();
+						}));
 					}
-				});
 
-				console.log('Fetched ' + urlResults.length + ' entries.');
-				for (let i = 0; i < urlResults.length; i++) {
-					console.log(`fetching page [${i}]...`);
-					let entry = urlResults[i];
-					await page.goto(entry.link);
-					await page.setUserAgent(config.userAgent);
+					await Promise.all(pagePromises);
+					await browser.close();
 
-					let tags = await getAllInnerText(page, website.selectors.tags);
-					let author = await getInnerText(page, website.selectors.author);
-					let info = await getInnerText(page, website.selectors.info);
-					let summary = await getInnerHTML(page, website.selectors.summary);
-					let content = await getInnerHTML(page, website.selectors.content);
+					Article.insertMany(articles).then((data) => {
+						console.log(`Inserted ${data.length} articles`);
 
-					/*
-					Site specific scraping
-					let location = null;
-					let publishedAt = null;
-					let modifiedAt = null;
-
-					if (website.name == '24ur') {
-						let infoArr = info.split('|');
-						let locationAndDate = infoArr[0].split(',');
-						location = locationAndDate[0];
-						let datetime = locationAndDate[1] + ' ' + locationAndDate[2];
-
-						publishedAt = moment(datetime, 'DD.MM.YYYY hh:mm').toDate();
-						modifiedAt = infoArr[1];
-					 */
-
-					let article = new Article({
-						site: website.title,
-						url: entry.link,
-						title: entry.title,
-						mainImage: entry.image,
-						author: author,
-						info: info,
-						tags: tags,
-						summary: summary,
-						content: content,
+						// Reset array after each main page
+						articles.length = 0;
 					});
 
-					articles.push(article);
-				}
+					resBrowser();
+				}));
 			}
 
-			console.log(`Fetched ${articles.length} articles.`);
-			browser.close();
-		});
-	})();
+			await Promise.all(sitePromises);
+			console.log(`Time elapsed ${Math.round((new Date().getTime() - startDate) / 1000)} s`);
+		})();
+	});
+
 	res.json({status: 'Scraping...'});
 });
+
 module.exports = router;
