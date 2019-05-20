@@ -6,7 +6,25 @@ $(document).ready(() => {
 	});
 
 	$('.progress-container').hide();
+
+	let articlesTable = $('#articlesTable').DataTable({
+		columns: [
+			{data: 'createdAt', visible: false, searchable: false},
+			{data: 'title'},
+			{data: 'author'},
+			{data: 'site'},
+			{data: 'actions'},
+		],
+		responsive: true,
+		language: {
+			paginate: {
+				next: '<i class="fa fa-arrow-right"></i>',
+				previous: '<i class="fa fa-arrow-left"></i>',
+			},
+		},
+	});
 });
+
 let dataTables = [];
 
 $('table.table-data').each(function() {
