@@ -121,7 +121,7 @@ router.get('/pages', function(req, res) {
 									let summary = await getInnerHTML(page, website.selectors.summary);
 									let content = await getInnerHTML(page, website.selectors.content);
 
-									articles.push({
+									let article = new Article({
 										site: website.title,
 										url: entry.link,
 										title: entry.title,
@@ -132,9 +132,13 @@ router.get('/pages', function(req, res) {
 										summary: summary,
 										content: content,
 									});
+									articles.push(article);
 
-									io.fetchedArticle(
-											{article: {title: entry.title, url: entry.link, author}, website});
+									article.save((err, data) => {
+										if (err) return console.log(err);
+										io.fetchedArticle({article: data, website});
+									});
+
 								} catch (err) {
 									console.log(`An error occured on url: ${entry.link}`);
 								} finally {
@@ -147,13 +151,6 @@ router.get('/pages', function(req, res) {
 
 					await Promise.all(pagePromises);
 					await browser.close();
-
-					Article.insertMany(articles).then((data) => {
-						console.log(`Inserted ${data.length} articles`);
-
-						// Reset array after each main page
-						articles.length = 0;
-					});
 
 					resBrowser();
 				}));
