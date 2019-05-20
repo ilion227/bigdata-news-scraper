@@ -91,7 +91,7 @@ router.get('/pages', function(req, res) {
 
 						return data;
 					});
-					articleEntries = articleEntries.slice(0, 2);
+					articleEntries = articleEntries.slice(0, 4);
 					await mainPage.close();
 					console.log('Fetched ' + articleEntries.length + ' entries.');
 					io.fetchedArticles({count: articleEntries.length, site: website.title});
@@ -137,7 +137,7 @@ router.get('/pages', function(req, res) {
 										content: content,
 									});
 
-									io.fetchedArticle({title: entry.title, url: entry.link, site: website.title});
+									io.fetchedArticle({title: entry.title, url: entry.link, site: website.title, author});
 								} catch (err) {
 									console.log(`An error occured on url: ${entry.link}`);
 								} finally {
