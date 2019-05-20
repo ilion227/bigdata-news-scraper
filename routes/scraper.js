@@ -1,10 +1,12 @@
 const express = require('express');
 const puppeteer = require('puppeteer');
+const io = require('../sockets/base');
 
 const Article = require('../models/Article');
 const Website = require('../models/Website');
 
 const config = require('../config');
+
 
 const router = express.Router();
 let articles = [];
@@ -95,6 +97,7 @@ router.get('/pages', function(req, res) {
 					articleEntries = articleEntries.slice(0, 2);
 					await mainPage.close();
 					console.log('Fetched ' + articleEntries.length + ' entries.');
+					io.fetchedArticles(articleEntries.length);
 
 					for (let numPage = 0; numPage < config.concurrentOperations; numPage++) {
 						pagePromises.push(new Promise(async (resPage) => {
