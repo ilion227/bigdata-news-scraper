@@ -1,8 +1,14 @@
 const io = require('socket.io')();
 
-io.fetchedArticles = (count) => {
+io.fetchedArticles = (data) => {
 	io.emit('fetchedArticles', {
-		count,
+		...data,
+	});
+};
+
+io.fetchedArticle = (data) => {
+	io.emit('fetchedArticle', {
+		...data,
 	});
 };
 

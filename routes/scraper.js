@@ -7,14 +7,11 @@ const Website = require('../models/Website');
 
 const config = require('../config');
 
-
 const router = express.Router();
 let articles = [];
 
 router.get('/', function(req, res, next) {
-	Article.find({}, async function(err, articles) {
-		res.send(articles);
-	});
+	res.render('pages/scraper');
 });
 
 async function getInnerHTML(element, selector) {
@@ -97,7 +94,7 @@ router.get('/pages', function(req, res) {
 					articleEntries = articleEntries.slice(0, 2);
 					await mainPage.close();
 					console.log('Fetched ' + articleEntries.length + ' entries.');
-					io.fetchedArticles(articleEntries.length);
+					io.fetchedArticles({count: articleEntries.length, site: website.title});
 
 					for (let numPage = 0; numPage < config.concurrentOperations; numPage++) {
 						pagePromises.push(new Promise(async (resPage) => {
@@ -139,6 +136,8 @@ router.get('/pages', function(req, res) {
 										summary: summary,
 										content: content,
 									});
+
+									io.fetchedArticle({title: entry.title, url: entry.link, site: website.title});
 								} catch (err) {
 									console.log(`An error occured on url: ${entry.link}`);
 								} finally {
