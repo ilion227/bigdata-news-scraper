@@ -1,0 +1,43 @@
+<div class="card shadow">
+    <div class="card-header border-0">
+        <h1>Pages</h1>
+    </div>
+</div>
+{{#each websites}}
+    <div class="card shadow my-4">
+        <div class="card-header bg-gradient-blue border-0">
+            <h2 class="text-white">{{this.title}}</h2>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="real-time mt-4">
+                        <div class="site-entry mt-4" data-site="{{this.title}}">
+                            <div class="my-2">
+
+                                <p class="info"></p>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-bar progress-bar-striped bg-success progress-bar-animated"
+                                     role="progressbar"
+                                     aria-valuenow="0" aria-valuemin="0" aria-valuemax="" data-value="0"
+                                     data-max=""></div>
+                            </div>
+                            <table class="table table-striped">
+                                <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Author</th>
+                                    <th>Link</th>
+                                </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+{{/each}}

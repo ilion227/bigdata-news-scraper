@@ -8,6 +8,8 @@ const hbs = require('express-handlebars');
 
 const hbsHelpers = require('./public/javascripts/helpers.js');
 
+const dashboardRouter = require('./routes/dashboard');
+const websitesRouter = require('./routes/websites');
 const articlesRouter = require('./routes/articles');
 const usersRouter = require('./routes/users');
 const scraperRouter = require('./routes/scraper');
@@ -17,7 +19,7 @@ const app = express();
 app.set('view engine', 'hbs');
 app.engine('hbs', hbs({
 	extname: 'hbs',
-	defaultView: 'main.hbs',
+	defaultView: 'default.hbs',
 	helpers: hbsHelpers,
 	layoutsDir: __dirname + '/views/layouts/',
 	partialsDir: __dirname + '/views/partials/',
@@ -37,7 +39,9 @@ app.use(
 );
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use('/dashboard', dashboardRouter);
 app.use('/articles', articlesRouter);
+app.use('/websites', websitesRouter);
 app.use('/users', usersRouter);
 app.use('/scraper', scraperRouter);
 

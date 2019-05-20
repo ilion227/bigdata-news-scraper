@@ -10,20 +10,6 @@ const config = require('../config');
 const router = express.Router();
 let articles = [];
 
-router.get('/', function(req, res, next) {
-	Website.find({}, (err, websites) => {
-		if (err) return res.status(500).json({error: err});
-		res.render('pages/scraper', {websites});
-	});
-});
-
-router.get('/articles', function(req, res, next) {
-	Article.find({}, (err, articles) => {
-		if (err) return res.status(500).json({error: err});
-		res.json({articles});
-	});
-});
-
 async function getInnerHTML(element, selector) {
 	if (await element.$(selector) !== null) {
 		return await element.$eval(selector, node => node.innerHTML);

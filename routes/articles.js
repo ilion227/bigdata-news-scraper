@@ -5,16 +5,16 @@ var router = express.Router();
 
 /* GET home page. */
 router.get('/', async function(req, res, next) {
-  const articles = await Article.find({}).sort({'meta.publishedAt': 1}).exec();
+	const articles = await Article.find({}).sort({'meta.publishedAt': 1}).exec();
 
-  res.render('pages/articles', {articles: articles});
+	res.render('pages/articles', {layout: 'default', articles: articles});
 });
 
-/* GET scraper info. */
-router.get('/:id', async function(req, res, next) {
-  Article.findById(req.params.id, function(err, article) {
-    res.render('pages/article', {article: article.toObject()});
-  });
+router.get('/fetch', async function(req, res, next) {
+	Article.find({}, (err, articles) => {
+		if (err) return res.status(500).json({error: err});
+		res.json({articles});
+	});
 });
 
 module.exports = router;

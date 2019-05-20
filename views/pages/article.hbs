@@ -1,24 +1,5 @@
-<article class="single-article">
-    <h2><a href="{{article.url}}" target="_blank">{{article.title}}</a></h2>
-    <div class="article-head">
-        <div>
-            <span>{{formatDate article.meta.publishedAt}} | {{article.meta.modifiedAt}}</span>
-        </div>
-        <div>
-            <span>AVTOR: {{article.author}}</span>
-        </div>
-        <div>
-            <span>Predviden čas branja: {{article.meta.readingTime}}</span>
-        </div>
+<div class="card shadow">
+    <div class="card-header border-0">
+        <h1>Article</h1>
     </div>
-    <img src="{{article.mainImage}}" alt="Main image" class="article-main-image">
-    <hr>
-    <div class="article-body">
-        <div class="article-summary">
-            {{article.summary}}
-        </div>
-        <div class="article-content">
-            {{{article.content}}}
-        </div>
-    </div>
-</article>
+</div>
