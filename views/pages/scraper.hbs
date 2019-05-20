@@ -4,14 +4,40 @@
     <div class="row mt-4">
         <div class="col-md-12">
             <h4>Progress</h4>
-            <div class="real-time mt-4">
-
-            </div>
         </div>
+        {{#each websites}}
+            <div class="col-md-12">
+                <div class="real-time mt-4">
+                    <div class="site-entry mt-4" data-site="{{this.title}}">
+                        <div class="my-2">
+                            <b>{{this.title}}</b>
+                            <p class="info"></p>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar progress-bar-striped bg-success progress-bar-animated"
+                                 role="progressbar"
+                                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="" data-value="0"
+                                 data-max=""></div>
+                        </div>
+                        <table class="table table-striped">
+                            <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Author</th>
+                                <th>Link</th>
+                            </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {{/each}}
     </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.js"></script>
+<script src="//cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
 <script>
     $(document).ready(() => {
@@ -21,36 +47,38 @@
             });
         });
     });
+    $.get('/scraper/articles').then((data) => {
+        console.log(data);
+
+        for (let article of data.articles) {
+            let $siteEntry = $(`div.site-entry[data-site=${article.site}]`);
+            let $tableBody = $siteEntry.find('table tbody');
+
+            let $row = `
+            <tr>
+<td>${article.title}</td>
+<td>${article.author}</td>
+<td><a target="_blank" href="${article.url}">Link</a></td>
+</tr>`;
+            $tableBody.append($row);
+        }
+
+        $('table').DataTable();
+    });
+
     const socket = io.connect('http://localhost:3000');
 
     socket.on('fetchedArticles', function(data) {
         console.log(data);
-        let total = data.count;
-
-        let template = `<div class="site-entry mt-4" data-site="${data.site}">
-                            <div class="my-2">
-                                <b>${data.site}</b>
-                                <p class="info">Found ${total} articles!</p>
-                            </div>
-                            <div class="progress-container">
-                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
-                                     aria-valuenow="0" aria-valuemin="0" aria-valuemax="${total}" data-value="0" data-max="${total}"></div>
-                            </div>
-                            <table class="table table-striped">
-                                <thead><tr>
-<th>Title</th>
-<th>Author</th>
-<th>Link</th>
-</tr></thead>
-                                <tbody></tbody>
-                            </table>
-                        </div>`;
-
-        $('.real-time').append(template);
+        let max = data.count;
+        let $siteEntry = $(`div.site-entry[data-site=${data.website.title}]`);
+        let $progressBar = $siteEntry.find('div.progress-bar');
+        $progressBar.attr('aria-valuemax', max);
+        $progressBar.data('max', max);
     });
 
     socket.on('fetchedArticle', function(data) {
-        let $siteEntry = $(`div.site-entry[data-site=${data.site}]`);
+        let $siteEntry = $(`div.site-entry[data-site=${data.website.title}]`);
         let $progressBar = $siteEntry.find('div.progress-bar');
         let $tableBody = $siteEntry.find('table tbody');
 
@@ -65,10 +93,10 @@
 
         let $row = `
             <tr>
-<td>${data.title}</td>
-<td>${data.author}</td>
-<td><a target="_blank" href="${data.url}">Link</a></td>
+<td>${data.article.title}</td>
+<td>${data.article.author}</td>
+<td><a target="_blank" href="${data.article.url}">Link</a></td>
 </tr>`;
-        $tableBody.append($row);
+        $tableBody.prepend($row);
     });
 </script>

@@ -11,7 +11,17 @@ const router = express.Router();
 let articles = [];
 
 router.get('/', function(req, res, next) {
-	res.render('pages/scraper');
+	Website.find({}, (err, websites) => {
+		if (err) return res.status(500).json({error: err});
+		res.render('pages/scraper', {websites});
+	});
+});
+
+router.get('/articles', function(req, res, next) {
+	Article.find({}, (err, articles) => {
+		if (err) return res.status(500).json({error: err});
+		res.json({articles});
+	});
 });
 
 async function getInnerHTML(element, selector) {
@@ -91,10 +101,10 @@ router.get('/pages', function(req, res) {
 
 						return data;
 					});
-					articleEntries = articleEntries.slice(0, 4);
+					articleEntries = articleEntries.slice(0, 20);
 					await mainPage.close();
 					console.log('Fetched ' + articleEntries.length + ' entries.');
-					io.fetchedArticles({count: articleEntries.length, site: website.title});
+					io.fetchedArticles({count: articleEntries.length, website});
 
 					for (let numPage = 0; numPage < config.concurrentOperations; numPage++) {
 						pagePromises.push(new Promise(async (resPage) => {
@@ -137,7 +147,8 @@ router.get('/pages', function(req, res) {
 										content: content,
 									});
 
-									io.fetchedArticle({title: entry.title, url: entry.link, site: website.title, author});
+									io.fetchedArticle(
+											{article: {title: entry.title, url: entry.link, author}, website});
 								} catch (err) {
 									console.log(`An error occured on url: ${entry.link}`);
 								} finally {
