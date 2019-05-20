@@ -4,9 +4,7 @@ var express = require('express');
 var router = express.Router();
 
 router.get('/', async function(req, res, next) {
-	const articles = await Article.find({}).sort({'meta.publishedAt': 1}).exec();
-
-	res.render('pages/articles', {layout: 'single', articles});
+	res.render('pages/articles', {layout: 'single'});
 });
 
 router.get('/fetch', async function(req, res, next) {
