@@ -5,7 +5,6 @@ const articleSchema = new mongoose.Schema({
 	title: String,
 	author: String,
 	summary: String,
-	content: String,
 	url: String,
 	mainImage: String,
 	images: [String],

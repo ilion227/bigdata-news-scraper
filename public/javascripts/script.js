@@ -62,7 +62,7 @@ $.get('/articles/fetch').then((data) => {
 				author: article.author,
 				createdAt: article.createdAt,
 				site: `<td><span class="badge badge-primary">${article.site}</span></td>`,
-				actions: `<a target="_blank" href="/article/${article._id}" class="badge badge-pill badge-primary">INFO</a>
+				actions: `<a target="_blank" href="/articles/${article._id}" class="badge badge-pill badge-primary">INFO</a>
 <a target="_blank" href="${article.url}" class="badge badge-pill badge-success"><i class="fa fa-external-link-alt"></i></a>`,
 			}).draw().node();
 		} else {
@@ -72,7 +72,7 @@ $.get('/articles/fetch').then((data) => {
 				title: article.title,
 				author: article.author,
 				createdAt: article.createdAt,
-				actions: `<a target="_blank" href="/article/${article._id}" class="badge badge-pill badge-primary">INFO</a><a target="_blank" href="${article.url}" class="badge badge-pill badge-success"><i class="fa fa-external-link-alt"></i></a>`,
+				actions: `<a target="_blank" href="/articles/${article._id}" class="badge badge-pill badge-primary">INFO</a><a target="_blank" href="${article.url}" class="badge badge-pill badge-success"><i class="fa fa-external-link-alt"></i></a>`,
 			}).draw().node();
 		}
 	}
@@ -115,7 +115,7 @@ socket.on('fetchedArticle', function(data) {
 			author: data.article.author,
 			createdAt: data.article.createdAt,
 			site: `<td><span class="badge badge-primary">${data.article.site}</span></td>`,
-			actions: `<a target="_blank" href="/article/${data.article._id}" class="badge badge-pill badge-primary">INFO</a>
+			actions: `<a target="_blank" href="/articles/${data.article._id}" class="badge badge-pill badge-primary">INFO</a>
 <a target="_blank" href="${data.article.url}" class="badge badge-pill badge-success"><i class="fa fa-external-link-alt"></i></a>`,
 		}).draw(false).node();
 		articlesTable.order([0, 'desc']).draw();
@@ -128,7 +128,7 @@ socket.on('fetchedArticle', function(data) {
 			title: data.article.title,
 			author: data.article.author,
 			createdAt: data.article.createdAt,
-			actions: `<a target="_blank" href="/article/${data.article._id}" class="badge badge-pill badge-primary">INFO</a>
+			actions: `<a target="_blank" href="/articles/${data.article._id}" class="badge badge-pill badge-primary">INFO</a>
 <a target="_blank" href="${data.article.url}" class="badge badge-pill badge-success"><i class="fa fa-external-link-alt"></i></a>`,
 		}).draw(false).node();
 		table.order([0, 'desc']).draw();

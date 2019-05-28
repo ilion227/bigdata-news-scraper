@@ -76,7 +76,7 @@ router.get('/pages', function(req, res) {
 						});
 					});
 
-					let articleEntries = await mainPage.evaluate(() => {
+					let entries = await mainPage.evaluate(() => {
 						let data = [];
 						document.querySelectorAll('a').forEach(function(el) {
 							let image = el.querySelector('img');
@@ -87,9 +87,18 @@ router.get('/pages', function(req, res) {
 
 						return data;
 					});
-					articleEntries = articleEntries.slice(0, 20);
+
+					let articleEntries = [];
+
+					for (let entry of entries) {
+						await Article.find({url: entry.link}, function(err, article) {
+							if (article.length === 0)
+								articleEntries.push(entry);
+						});
+					}
+
 					await mainPage.close();
-					console.log('Fetched ' + articleEntries.length + ' entries.');
+					console.log('Fetched ' + articleEntries.length + ' new entries.');
 					io.fetchedArticles({count: articleEntries.length, website});
 
 					for (let numPage = 0; numPage < config.concurrentOperations; numPage++) {
@@ -119,7 +128,13 @@ router.get('/pages', function(req, res) {
 									let author = await getInnerText(page, website.selectors.author);
 									let info = await getInnerText(page, website.selectors.info);
 									let summary = await getInnerHTML(page, website.selectors.summary);
-									let content = await getInnerHTML(page, website.selectors.content);
+
+									let images = [];
+									if (await page.$(`${website.selectors.content} img`) !== null) {
+										images = await page.$$eval(`${website.selectors.content} img`, nodes => {
+											return nodes.map(node => node.src);
+										});
+									}
 
 									let article = new Article({
 										site: website.title,
@@ -130,7 +145,7 @@ router.get('/pages', function(req, res) {
 										info: info,
 										tags: tags,
 										summary: summary,
-										content: content,
+										images: images,
 									});
 									articles.push(article);
 
