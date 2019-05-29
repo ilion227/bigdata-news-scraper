@@ -1,17 +1,59 @@
-<div class="card shadow">
-    <div class="card-header border-0">
-        <h1>{{article.title}}</h1>
-    </div>
-</div>
+<div id="single-article">
+    <div class="card shadow">
+        <div class="card-header border-0 clearfix">
+            <div class="row">
+                <div class="col-md-3">
+                    <span class="p-3 badge badge-lg bg-gradient-blue text-white font-weight-500 text-capitalize">#{{article.id}}</span>
+                </div>
 
-<div class="card shadow my-4">
-    <div class="card-header bg-gradient-primary"></div>
-    <div class="card-body">
-        <div>
+                <div class="col-md-3 offset-md-6">
+                    <span class="p-3 badge badge-pill badge-lg bg-gradient-indigo text-white float-md-right">{{article.site}}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow my-4">
+
+        <div class="card-body">
+            <p class="font-weight-500 text-capitalize">{{article.createdAt}}</p>
+
             <div>
-                <pre>
-                    {{article}}
-                </pre>
+                <h2>{{article.title}}</h2>
+            </div>
+            <div class="mb-4">
+                <img class="img-thumbnail" src="{{article.mainImage}}" alt="Article's main image thumbnail"/>
+            </div>
+
+            <div>
+                <h4>Author</h4>
+                <p>{{article.author}}</p>
+            </div>
+            <div>
+                <h4>Info</h4>
+                <p>{{article.info}}</p>
+            </div>
+            <div>
+                <h4>Summary</h4>
+                <p>{{{article.summary}}}</p>
+            </div>
+            <div>
+                <div>
+                    <div class="card shadow my-4">
+                        <div class="card-header bg-gradient-indigo text-white">
+                            <span>Images</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {{#each article.images}}
+                                    <div class="col-md-3 my-4">
+                                        <img class="image" src="{{this}}" alt="Article Image"/>
+                                    </div>
+                                {{/each}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
