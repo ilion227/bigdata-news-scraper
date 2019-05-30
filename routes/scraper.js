@@ -2,6 +2,8 @@ const express = require('express');
 const puppeteer = require('puppeteer');
 const io = require('../sockets/base');
 
+const {Cluster} = require('puppeteer-cluster');
+
 const Article = require('../models/Article');
 const Website = require('../models/Website');
 
@@ -39,144 +41,109 @@ async function getAllInnerText(element, selector) {
 }
 
 /* GET scraper info. */
-router.get('/pages', function(req, res) {
-	Website.find({}, async function(err, websites) {
-		(async () => {
-			const startDate = new Date().getTime();
-			const sitePromises = [];
-			for (let i = 0; i < websites.length; i++) {
-				sitePromises.push(new Promise(async (resBrowser) => {
-					let website = websites[i];
-					let browser = await puppeteer.launch(config.launchOptions);
-					const pagePromises = [];
+router.get('/pages', async function(req, res) {
+	let websites = await Website.find({}).exec();
 
-					console.log('Scraping:', website.url);
-
-					let mainPage = await browser.newPage();
-					await mainPage.goto(website.url, {waitUntil: 'networkidle0'});
-					await mainPage.evaluate(async () => {
-						await new Promise((resolve, reject) => {
-							try {
-								let lastScrollTop = document.scrollingElement.scrollTop;
-								// Scroll to bottom of page until we can't scroll anymore.
-								const scroll = () => {
-									document.scrollingElement.scrollTop += 100;//(viewPortHeight / 2);
-									if (document.scrollingElement.scrollTop !== lastScrollTop) {
-										lastScrollTop = document.scrollingElement.scrollTop;
-										requestAnimationFrame(scroll);
-									} else {
-										resolve();
-									}
-								};
-								scroll();
-							} catch (err) {
-								console.log(err);
-								reject(err.toString());
-							}
-						});
-					});
-
-					let entries = await mainPage.evaluate(() => {
-						let data = [];
-						document.querySelectorAll('a').forEach(function(el) {
-							let image = el.querySelector('img');
-							let title = el.querySelector('h1,h2,h3,h4,h5,h6');
-							if (el.href.length === 0 || !image || !title || title.innerText.trim().length === 0) return;
-							data.push({title: title.innerText.trim(), link: el.href, image: image.src});
-						});
-
-						return data;
-					});
-
-					let articleEntries = [];
-
-					for (let entry of entries) {
-						await Article.find({url: entry.link}, function(err, article) {
-							if (article.length === 0)
-								articleEntries.push(entry);
-						});
-					}
-
-					await mainPage.close();
-					console.log('Fetched ' + articleEntries.length + ' new entries.');
-					io.fetchedArticles({count: articleEntries.length, website});
-
-					for (let numPage = 0; numPage < config.concurrentOperations; numPage++) {
-						pagePromises.push(new Promise(async (resPage) => {
-							while (articleEntries.length > 0) {
-								let entry = articleEntries.pop();
-								console.log(`Visiting url: ${entry.link}`);
-
-								let page = await browser.newPage();
-								await page.setUserAgent(config.userAgent);
-								await page.setRequestInterception(true);
-								page.on('request', (request) => {
-									const requestUrl = request._url.split('?')[0].split('#')[0];
-									if (
-											config.blockedResourceTypes.indexOf(request.resourceType()) !== -1 ||
-											config.skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
-									) {
-										request.abort();
-									} else {
-										request.continue();
-									}
-								});
-
-								try {
-									await page.goto(entry.link);
-									let tags = await getAllInnerText(page, website.selectors.tags);
-									let author = await getInnerText(page, website.selectors.author);
-									let info = await getInnerText(page, website.selectors.info);
-									let summary = await getInnerHTML(page, website.selectors.summary);
-
-									let images = [];
-									if (await page.$(`${website.selectors.content} img`) !== null) {
-										images = await page.$$eval(`${website.selectors.content} img`, nodes => {
-											return nodes.map(node => node.src);
-										});
-									}
-
-									let article = new Article({
-										site: website.title,
-										url: entry.link,
-										title: entry.title,
-										mainImage: entry.image,
-										author: author,
-										info: info,
-										tags: tags,
-										summary: summary,
-										images: images,
-									});
-									articles.push(article);
-
-									article.save((err, data) => {
-										if (err) return console.log(err);
-										io.fetchedArticle({article: data, website});
-									});
-
-								} catch (err) {
-									console.log(`An error occured on url: ${entry.link}`);
-								} finally {
-									await page.close();
-								}
-							}
-							resPage();
-						}));
-					}
-
-					await Promise.all(pagePromises);
-					await browser.close();
-
-					resBrowser();
-				}));
-			}
-
-			await Promise.all(sitePromises);
-			console.log(`Time elapsed ${Math.round((new Date().getTime() - startDate) / 1000)} s`);
-		})();
+	const cluster = await Cluster.launch({
+		concurrency: Cluster.CONCURRENCY_CONTEXT,
+		maxConcurrency: config.concurrentOperations,
+		puppeteerOptions: config.launchOptions,
+		monitor: true,
 	});
 
-	res.json({status: 'Scraping...'});
+	await cluster.task(async ({page, data}) => {
+		let {entry, website} = data;
+		await page.setUserAgent(config.userAgent);
+		await page.setRequestInterception(true);
+		page.on('request', (request) => {
+			const requestUrl = request._url.split('?')[0].split('#')[0];
+			if (
+					config.blockedResourceTypes.indexOf(request.resourceType()) !== -1 ||
+					config.skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
+			) {
+				request.abort();
+			} else {
+				request.continue();
+			}
+		});
+
+		try {
+			await page.goto(entry.link);
+			let tags = await getAllInnerText(page, website.selectors.tags);
+			let author = await getInnerText(page, website.selectors.author);
+			let info = await getInnerText(page, website.selectors.info);
+			let summary = await getInnerHTML(page, website.selectors.summary);
+
+			let images = [];
+			if (await page.$(`${website.selectors.content} img`) !== null) {
+				images = await page.$$eval(`${website.selectors.content} img`, nodes => {
+					return nodes.map(node => node.src);
+				});
+			}
+
+			let article = new Article({
+				site: website.title,
+				url: entry.link,
+				title: entry.title,
+				mainImage: entry.image,
+				author: author,
+				info: info,
+				tags: tags,
+				summary: summary,
+				images: images,
+			});
+			articles.push(article);
+
+			article.save((err, data) => {
+				if (err) return console.log(err);
+				io.fetchedArticle({article: data, website});
+			});
+
+		} catch (err) {
+			console.log(`An error occured on url: ${entry.link}`);
+		} finally {
+			await page.close();
+		}
+	});
+
+	for (let i = 0; i < websites.length; i++) {
+		let website = websites[i];
+
+		let browser = await puppeteer.launch(config.launchOptions);
+
+		let page = await browser.newPage();
+		await page.goto(website.url);
+		let entries = await page.evaluate(() => {
+			let data = [];
+			document.querySelectorAll('a').forEach(function(el) {
+				let image = el.querySelector('img');
+				let title = el.querySelector('h1,h2,h3,h4,h5,h6');
+				if (el.href.length === 0 || !image || !title || title.innerText.trim().length === 0) return;
+				data.push({title: title.innerText.trim(), link: el.href, image: image.src});
+			});
+
+			return data;
+		});
+
+		let articleEntries = [];
+
+		for (let entry of entries) {
+			await Article.find({url: entry.link}, function(err, article) {
+				if (article.length === 0)
+					articleEntries.push(entry);
+			});
+		}
+		console.log('Fetched ' + articleEntries.length + ' new entries.');
+		io.fetchedArticles({count: articleEntries.length, website});
+
+		for (let entry of articleEntries) {
+			await cluster.queue({url: entry.link, entry, website});
+		}
+	}
+	await cluster.idle();
+	await cluster.close();
+
+	res.json({'status': 200});
 });
 
 module.exports = router;
