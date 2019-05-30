@@ -28,14 +28,13 @@ async function getInnerText(element, selector) {
 
 async function getAllInnerText(element, selector) {
 	if (await element.$$(selector) !== null) {
-		const values = await element.$$eval(selector, nodes => {
+		return await element.$$eval(selector, nodes => {
 			let data = [];
-			for (node of nodes) {
+			for (let node of nodes) {
 				data.push(node.innerText.trim());
 			}
 			return data;
 		});
-		return values;
 	}
 	return null;
 }
