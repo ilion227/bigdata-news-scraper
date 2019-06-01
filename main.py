@@ -1,31 +1,72 @@
 import io
-
 import requests
 import json
-import re
+
 from bs4 import BeautifulSoup
 
-url = "https://www.zurnal24.si"
-response = requests.get(url)
+added = 1
+found = 1
 data = []
+subdata = []
+stopnja = 3
+str_stopnja = str(stopnja)
+tr_st = 1
+str_tr_st = str(tr_st)
+url = "http://www.os-livada.si/"
+data.append(url)
+subdata.append(url)
+dolzina = 0
 
-soup = BeautifulSoup(response.content, "html.parser")
 
-ct = 1
-for a in soup.find_all('a', href=True):
-    if a['href'].startswith('/') and re.search(r'\d+$', a['href']):
-        ct = ct + 1
-        print("Article " + str(ct))
-        suburl = url + a['href']
-        sub_soup = BeautifulSoup(requests.get(suburl).content, "html.parser")
-        title = sub_soup.find('h1', {"class": "article__title"}).text
-        authors = []
-        for author in sub_soup.find('div', {"class": "article__authors"}).find_all("a"):
-            authors.append(author.text.strip())
-        excerpt = sub_soup.find('div', {"class": "article__leadtext"}).text.strip()
-        data.append((title, excerpt, authors))
+def get_links(link):
+    global added
+    global found
+    url = link
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, "html.parser")
+    for a in soup.find_all('a', href=True):
+        skok = 0
+        found += 1
+        if a['href'].startswith('/'):
+            url = link + a['href']
+        elif a['href'].startswith('http'):
+            url = a['href']
+        else:
+            url = 0
+        match = 0
+        for povezava in subdata:
+            if url == povezava:
+                match += 1
+                break
+        # if a['href'].startswith('#') or a['href'].startswith('mailto'):
+        if url == 0:
+            skok = 1
+        if match == 0 and skok == 0:
+            subdata.append(url)
+            added = added + 1
+            print("Povezava " + str(added))
+
+
+while tr_st <= stopnja:
+    print(str_tr_st + ". stopnja: ")
+    for link in data[dolzina:]:
+        get_links(link)
+    dolzina = len(data)
+    for link in subdata[dolzina:]:
+        data.append(link)
+    found_str = str(found)
+    added_str = str(added)
+    print(str_tr_st + ". stopnja Found " + found_str + ", added " + added_str + ".")
+    tr_st += 1
+    str_tr_st = str(tr_st)
+
 
 with io.open("data.json", "w", encoding='utf8') as datafile:
     json.dump(data, datafile, ensure_ascii=False)
 
-print("Done.")
+found_str = str(found)
+added_str = str(added)
+
+print("Done." + str_stopnja + " stopenj. Found " + found_str + ", added " + added_str + ".")
+
+
