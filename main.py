@@ -48,7 +48,7 @@ def get_links(link):
 
 
 while tr_st <= stopnja:
-    print(str_tr_st + ". stopnja: ")
+    print(str_tr_st + ". level: ")
     for link in data[dolzina:]:
         get_links(link)
     dolzina = len(data)
@@ -56,7 +56,7 @@ while tr_st <= stopnja:
         data.append(link)
     found_str = str(found)
     added_str = str(added)
-    print(str_tr_st + ". stopnja Found " + found_str + ", added " + added_str + ".")
+    print(str_tr_st + ". level Found " + found_str + ", added " + added_str + ".")
     tr_st += 1
     str_tr_st = str(tr_st)
 
@@ -67,6 +67,6 @@ with io.open("data.json", "w", encoding='utf8') as datafile:
 found_str = str(found)
 added_str = str(added)
 
-print("Done." + str_stopnja + " stopenj. Found " + found_str + ", added " + added_str + ".")
+print("Done." + str_stopnja + " levels. Found " + found_str + ", added " + added_str + ".")
 
 
