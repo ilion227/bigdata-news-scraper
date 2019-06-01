@@ -8,14 +8,14 @@ added = 1
 found = 1
 data = []
 subdata = []
-stopnja = 3
-str_stopnja = str(stopnja)
+level = 2
+str_level = str(level)
 tr_st = 1
 str_tr_st = str(tr_st)
-url = "http://www.os-livada.si/"
+url = "https://www.os-livada.si/"
 data.append(url)
 subdata.append(url)
-dolzina = 0
+length = 0
 
 
 def get_links(link):
@@ -38,25 +38,24 @@ def get_links(link):
             if url == povezava:
                 match += 1
                 break
-        # if a['href'].startswith('#') or a['href'].startswith('mailto'):
         if url == 0:
             skok = 1
         if match == 0 and skok == 0:
             subdata.append(url)
             added = added + 1
-            print("Povezava " + str(added))
+            print("Link " + str(added))
 
 
-while tr_st <= stopnja:
+while tr_st <= level:
     print(str_tr_st + ". level: ")
-    for link in data[dolzina:]:
+    for link in data[length:]:
         get_links(link)
-    dolzina = len(data)
-    for link in subdata[dolzina:]:
+    length = len(data)
+    for link in subdata[length:]:
         data.append(link)
     found_str = str(found)
     added_str = str(added)
-    print(str_tr_st + ". level Found " + found_str + ", added " + added_str + ".")
+    print(str_tr_st + ". level. Found " + found_str + ", added " + added_str + ".")
     tr_st += 1
     str_tr_st = str(tr_st)
 
@@ -67,6 +66,6 @@ with io.open("data.json", "w", encoding='utf8') as datafile:
 found_str = str(found)
 added_str = str(added)
 
-print("Done." + str_stopnja + " levels. Found " + found_str + ", added " + added_str + ".")
+print("Done." + str_level + " levels. Found " + found_str + ", added " + added_str + ".")
 
 
