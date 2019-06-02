@@ -2,9 +2,126 @@ import sys
 import urllib.request
 
 import cv2 as cv
+import math
 import numpy as np
 from bson.objectid import ObjectId
 from pymongo import MongoClient
+
+CELL_SIZE = (16, 16)
+BLOCK_SIZE = (2, 2)
+RESIZE_DIMENSIONS = (128, 256)
+DISTANCE = 2
+
+
+def histogram_oriented_gradients(img, shape):
+    img = cv.resize(img, RESIZE_DIMENSIONS)
+
+    # Gradient and angle
+    height, width = img.shape
+
+    gx = cv.Sobel(img, cv.CV_32F, 1, 0, ksize=1)
+    gy = cv.Sobel(img, cv.CV_32F, 0, 1, ksize=1)
+
+    a = np.zeros((height, width))
+    g = np.zeros((height, width))
+
+    bins = 9
+
+    for x in range(0, height):
+        for y in range(0, width):
+            g[x, y] = math.sqrt(math.pow(gx[x, y], 2) + math.pow(gy[x, y], 2))
+            a[x, y] = math.degrees(math.atan2(gy[x, y], gx[x, y]))
+
+    hogs = np.zeros((int(height / CELL_SIZE[0]),
+                     int(width / CELL_SIZE[1]), bins))
+
+    row = 0
+    for y in range(0, height, CELL_SIZE[1]):
+        col = 0
+        for x in range(0, width, CELL_SIZE[0]):
+            gradients_cell = g[y:y + CELL_SIZE[1], x:x + CELL_SIZE[0]]
+            angles_cell = a[y:y + CELL_SIZE[1], x:x + CELL_SIZE[0]]
+            angles_cell = np.absolute(angles_cell)
+
+            bin_size = 180 // bins
+            hog = np.zeros(bins)
+            for i in range(0, CELL_SIZE[0]):
+                for j in range(0, CELL_SIZE[1]):
+                    gradient = gradients_cell[i, j]
+                    angle = angles_cell[i, j]
+
+                    left = math.floor(angle / bin_size)
+                    right = math.ceil(angle / bin_size)
+                    value = float(angle / bin_size)
+
+                    l_value = float(value - left)
+                    r_value = float(right - value)
+
+                    if right >= bins:
+                        right -= bins
+
+                    if left >= bins:
+                        left -= bins
+
+                    if value >= bins:
+                        value -= bins
+
+                    if left == right:
+                        hog[int(value)] += gradient
+                    elif float(value - left) > 0.5:
+                        hog[left] += l_value * gradient
+                        hog[right] += r_value * gradient
+                    else:
+                        hog[right] += l_value * gradient
+                        hog[left] += r_value * gradient
+
+            hog = hog / (CELL_SIZE[0] * CELL_SIZE[1])
+
+            hogs[row][col] = hog.flatten()
+            col = col + 1
+        row = row + 1
+
+    features = []
+
+    for j in range(0, hogs.shape[0]):
+        for i in range(0, hogs.shape[1]):
+            local_hogs = hogs[j:j + BLOCK_SIZE[0], i:i + BLOCK_SIZE[1]]
+            if (i * CELL_SIZE[0] + CELL_SIZE[0] * 2 > width or j *
+                    CELL_SIZE[1] + CELL_SIZE[
+                        1] * 2 > height):
+                continue
+
+            squared = np.square(local_hogs)
+            squared = squared + math.pow(0.0001, 2)
+            l2_norm = np.sum(squared)
+
+            normalized_hogs = local_hogs / l2_norm
+
+            features.append(normalized_hogs.flatten())
+
+    data = {
+        "cell_dimensions": {
+            "x": CELL_SIZE[0],
+            "y": CELL_SIZE[1]
+        },
+        "block_dimensions": {
+            "x": BLOCK_SIZE[0],
+            "y": BLOCK_SIZE[1]
+        },
+        "n_bins": bins,
+        "img_dimensions": {
+            "x": shape[1],
+            "y": shape[0]
+        },
+        "resized_img_dimensions": {
+            "x": RESIZE_DIMENSIONS[0],
+            "y": RESIZE_DIMENSIONS[1]
+        },
+        "values": np.concatenate(features).ravel().tolist()
+    }
+
+    return data
+
 
 if len(sys.argv) < 2:
     print("Article's ID from MongoDB must be provided!")
@@ -32,6 +149,25 @@ for image in images:
 
     response = urllib.request.urlopen(url)
     npData = np.asarray(bytearray(response.read()), dtype="uint8")
-    imageData = cv.imdecode(npData, cv.IMREAD_GRAYSCALE)
+    image_data = cv.imdecode(npData, cv.IMREAD_GRAYSCALE)
 
     print("Image read, generate features")
+
+    hog_data = histogram_oriented_gradients(image_data, image_data.shape)
+    # TODO
+    lbp_data = []
+    lbp_u_data = []
+    lbp_d_data = []
+
+    articles_collection.update_one({
+        "_id": article_id,
+        "images": {"$elemMatch": {"_id": image["_id"]}}}, {
+        "$set": {
+            "images.$.generatedFeatures": True,
+            "images.$.features.hog": hog_data,
+            "images.$.features.lbp": lbp_data,
+            "images.$.features.lbp_u": lbp_u_data,
+            "images.$.features.lbp_d": lbp_d_data,
+        }})
+
+    sys.exit()
