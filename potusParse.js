@@ -6,7 +6,7 @@ const potusParse = function(url) {
         .then(function(html) {
             return {
                 Naslov:($('.article__title', html).text()),
-                Info:($('.article__info', html).text()),
+                Informacije:($('.article__info', html).text()),
                 Čas_branja:($('.article__readingtime', html).text()),
                 Povzetek:($('.article__summary', html).text()),
             };
