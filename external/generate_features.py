@@ -371,30 +371,35 @@ article = articles_collection.find_one({"_id": article_id})
 images = article['images']
 
 for image in images:
-    url = image['url']
-    if len(url) <= 0:
-        continue
+    try:
+        url = image['url']
+        if len(url) <= 0:
+            continue
 
-    print("Processing", url)
+        print("Processing", url)
 
-    response = urllib.request.urlopen(url)
-    npData = np.asarray(bytearray(response.read()), dtype="uint8")
-    image_data = cv.imdecode(npData, cv.IMREAD_GRAYSCALE)
+        response = urllib.request.urlopen(url)
+        npData = np.asarray(bytearray(response.read()), dtype="uint8")
+        image_data = cv.imdecode(npData, cv.IMREAD_GRAYSCALE)
 
-    hog_data = histogram_oriented_gradients(image_data, image_data.shape)
-    lbp_data = calculate_lbp(image_data, image_data.shape)
-    lbp_u_data = calculate_lbp_uniform(image_data, image_data.shape)
-    lbp_d_data = calculate_lbp_distance(image_data, image_data.shape, DISTANCE)
+        hog_data = histogram_oriented_gradients(image_data, image_data.shape)
+        lbp_data = calculate_lbp(image_data, image_data.shape)
+        lbp_u_data = calculate_lbp_uniform(image_data, image_data.shape)
+        lbp_d_data = calculate_lbp_distance(image_data, image_data.shape, DISTANCE)
 
-    articles_collection.update_one({
-        "_id": article_id,
-        "images": {"$elemMatch": {"_id": image["_id"]}}}, {
-        "$set": {
-            "images.$.generatedFeatures": True,
-            "images.$.features.hog": hog_data,
-            "images.$.features.lbp": lbp_data,
-            "images.$.features.lbp_u": lbp_u_data,
-            "images.$.features.lbp_d": lbp_d_data,
-        }})
+        articles_collection.update_one({
+            "_id": article_id,
+            "images": {"$elemMatch": {"_id": image["_id"]}}}, {
+            "$set": {
+                "images.$.generatedFeatures": True,
+                "images.$.features.hog": hog_data,
+                "images.$.features.lbp": lbp_data,
+                "images.$.features.lbp_u": lbp_u_data,
+                "images.$.features.lbp_d": lbp_d_data,
+            }})
 
-    sys.exit()
+    except:
+        print("Something failed...")
+        pass
+
+print("Article's images processed!")
