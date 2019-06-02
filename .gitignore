@@ -62,9 +62,3 @@ typings/
 
 # scraper data
 data/
-
-public/fonts
-public/vendor
-public/stylesheets/bootstrap
-public/stylesheets/core
-public/stylesheets/custom
