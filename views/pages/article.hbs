@@ -40,10 +40,15 @@
             <div>
                 <div>
                     <div class="card shadow my-4">
-                        <div class="card-header bg-gradient-indigo text-white">
-                            <span>Images</span>
+                        <div class="card-header bg-gradient-indigo text-white clearfix">
+                            <div class="float-left">
+                                <span>Images</span>
+                            </div>
                         </div>
                         <div class="card-body">
+                            <button class="btn btn-primary generate-features text-white"
+                                    data-article-id="{{article._id}}">Generate Features
+                            </button>
                             <div class="row">
                                 {{#each article.images}}
                                     <div class="col-md-3 my-4">

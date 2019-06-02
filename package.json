@@ -17,6 +17,7 @@
     "node-sass-middleware": "0.11.0",
     "puppeteer": "^1.15.0",
     "puppeteer-cluster": "^0.16.0",
+    "python-shell": "^1.0.7",
     "socket.io": "^2.2.0"
   }
 }

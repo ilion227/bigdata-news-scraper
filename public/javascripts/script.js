@@ -6,6 +6,13 @@ $(document).ready(() => {
 		});
 	});
 
+	$('.generate-features').on('click', function() {
+		let id = $(this).data('article-id');
+		$.get(`/articles/${id}/generate`).then((data) => {
+			console.log('features are generating!', data);
+		});
+	});
+
 	$('.progress-container').hide();
 
 	if ($('#articlesTable').length) {
