@@ -1,5 +1,8 @@
 import sys
+import urllib.request
 
+import cv2 as cv
+import numpy as np
 from bson.objectid import ObjectId
 from pymongo import MongoClient
 
@@ -21,4 +24,14 @@ article = articles_collection.find_one({"_id": article_id})
 images = article['images']
 
 for image in images:
-    print("Processing", images)
+    print("Processing", image)
+
+    url = image['url']
+    if len(url) <= 0:
+        continue
+
+    response = urllib.request.urlopen(url)
+    npData = np.asarray(bytearray(response.read()), dtype="uint8")
+    imageData = cv.imdecode(npData, cv.IMREAD_GRAYSCALE)
+
+    print("Image read, generate features")
