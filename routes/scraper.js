@@ -75,9 +75,15 @@ router.get('/pages', async function(req, res) {
 
 			let images = [];
 			if (await page.$(`${website.selectors.content} img`) !== null) {
-				images = await page.$$eval(`${website.selectors.content} img`, nodes => {
+				let imageUrls = await page.$$eval(`${website.selectors.content} img`, nodes => {
 					return nodes.map(node => node.src);
 				});
+
+				for (let imageUrl of imageUrls) {
+					images.push({
+						url: imageUrl,
+					});
+				}
 			}
 
 			let article = new Article({

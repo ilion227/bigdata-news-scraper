@@ -7,7 +7,17 @@ const articleSchema = new mongoose.Schema({
 	summary: String,
 	url: String,
 	mainImage: String,
-	images: [String],
+	images: [
+		{
+			url: String,
+			generatedFeatures: {type: Boolean, default: false},
+			features: {
+				hog: Array,
+				lbp: Array,
+				lbp_u: Array,
+				lbp_d: Array,
+			},
+		}],
 	info: String,
 	meta: {
 		location: String,
