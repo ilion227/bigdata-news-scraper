@@ -1,18 +1,21 @@
 const rp = require('request-promise');
 const $ = require('cheerio');
+var fs = require('fs');
+
 const potusParse = require('./potusParse');
 const url = 'https://www.24ur.com/';
-var fs = require('fs');
 
 var obj = {
     info: []
 };
+
 //npm install --save request request-promise cheerio puppeteer
 rp(url)
     .then(function(html){
         //success!
         const wikiUrls = [];
-        for (let i = 0; i < $('.card.ng-star-inserted', html).length; i++) {
+        var lng = $('.card.ng-star-inserted', html).length;
+        for (let i = 0; i < lng; i++) {
             wikiUrls.push($('.card.ng-star-inserted', html)[i].attribs.href);
         }
         return Promise.all(
