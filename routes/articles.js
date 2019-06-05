@@ -15,6 +15,13 @@ router.get('/fetch', async function(req, res, next) {
 	});
 });
 
+
+router.get('/compare', async function(req, res, next) {
+		const articles = await Article.find({}).exec();
+
+		res.render('pages/compare', {layout: 'single', articles});
+});
+
 router.get('/:id', async function(req, res, next) {
 	const article = await Article.findById(req.params.id).exec();
 
