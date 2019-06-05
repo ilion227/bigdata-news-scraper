@@ -16,7 +16,7 @@ router.get('/fetch', async function(req, res, next) {
 });
 
 router.get('/compare', async function(req, res, next) {
-	const articles = await Article.find({images: {$exists: true, $ne: []}}).exec();
+	const articles = await Article.find({images: {$exists: true, $ne: []}, generatedFeatures: true}).exec();
 
 	res.render('pages/compare', {layout: 'single', articles});
 });
@@ -32,7 +32,7 @@ router.post('/compare/features', async function(req, res, next) {
 	let {first_article_id, second_article_id} = req.body;
 
 	PythonShell.PythonShell.run(__dirname + '/../external/test_compare.py',
-			{pythonOptions: ['-u'], args: [first_article_id,second_article_id]},
+			{pythonOptions: ['-u'], args: [first_article_id, second_article_id]},
 			function(err, results) {
 				if (err) throw err;
 

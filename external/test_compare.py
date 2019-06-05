@@ -1,30 +1,65 @@
-import json
+import sys
 
 import cv2 as cv
 import numpy as np
+from bson.objectid import ObjectId
+from pymongo import MongoClient
 
-base_values = None
-test1_values = None
-data_values = None
+if len(sys.argv) < 3:
+    print("Two article IDs from MongoDB must be provided!")
+    sys.exit()
 
-with open('base/hog/hog_features.json') as json_file:
-    data = json.load(json_file)
-    base_values = np.array(data['values'], dtype=float)
-with open('test1/hog/hog_features.json') as json_file:
-    data = json.load(json_file)
-    test1_values = np.array(data['values'], dtype=float)
-with open('data/hog/hog_features.json') as json_file:
-    data = json.load(json_file)
-    data_values = np.array(data['values'], dtype=float)
+first_article_id = ObjectId(sys.argv[1])
+second_article_id = ObjectId(sys.argv[2])
 
-base_values = np.float32(base_values)
-test1_values = np.float32(test1_values)
-data_values = np.float32(data_values)
+print("First ID of the article to compare: " + str(first_article_id))
+print("Second ID of the article to compare: " + str(second_article_id))
 
-for compare_method in range(4):
-    base_base = cv.compareHist(base_values, base_values, compare_method)
-    base_test1 = cv.compareHist(base_values, test1_values, compare_method)
-    base_test2 = cv.compareHist(base_values, data_values, compare_method)
-    print('Method:', compare_method,
-          'Perfect, Base-Test(1), Data-Test(2) :')
-    print(base_base, '/', base_test1, '/', base_test2)
+client = MongoClient('mongodb://localhost:27017/')
+
+db = client["news-scraper"]
+
+articles_collection = db.articles
+comparisons_collection = db.comparisons
+
+first_article = articles_collection.find_one({"_id": first_article_id})
+second_article = articles_collection.find_one({"_id": second_article_id})
+
+first_images = first_article['images']
+second_images = second_article['images']
+
+methods = ["HISTCMP_CORREL", "HISTCMP_CHISQR", "HISTCMP_INTERSECT", "HISTCMP_BHATTACHARYYA"]
+
+results = []
+
+for f_image in first_images:
+    for s_image in second_images:
+        first_image_data = np.array(f_image["features"]["hog"]["values"], dtype=float)
+        second_image_data = np.array(s_image["features"]["hog"]["values"], dtype=float)
+
+        first_image_data = np.float32(first_image_data)
+        second_image_data = np.float32(second_image_data)
+
+        print("Comparing " + str(f_image["_id"]) + " with " + str(s_image["_id"]))
+
+        result = {
+            "firstImageId": f_image["_id"],
+            "secondImageId": s_image["_id"],
+            "data": {}
+        }
+
+        for index, comparison_method in enumerate(methods):
+            compare = cv.compareHist(first_image_data, second_image_data, index)
+            result["data"][comparison_method] = compare
+
+        results.insert(len(results),result)
+
+comparison = {
+    "firstArticleId": first_article_id,
+    "secondArticleId": second_article_id,
+    "comparisons": results
+}
+
+x = comparisons_collection.insert_one(comparison)
+
+print(comparison)

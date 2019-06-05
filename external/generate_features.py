@@ -391,7 +391,7 @@ for image in images:
             "_id": article_id,
             "images": {"$elemMatch": {"_id": image["_id"]}}}, {
             "$set": {
-                "images.$.generatedFeatures": True,
+                "generatedFeatures": True,
                 "images.$.features.hog": hog_data,
                 "images.$.features.lbp": lbp_data,
                 "images.$.features.lbp_u": lbp_u_data,

@@ -7,10 +7,10 @@ const articleSchema = new mongoose.Schema({
 	summary: String,
 	url: String,
 	mainImage: String,
+	generatedFeatures: {type: Boolean, default: false},
 	images: [
 		{
 			url: String,
-			generatedFeatures: {type: Boolean, default: false},
 			features: {
 				hog: Array,
 				lbp: Array,
