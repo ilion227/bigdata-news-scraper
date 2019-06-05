@@ -41,9 +41,12 @@
                                         <td>{{this.secondImageId}}</td>
                                         <td class="text-white {{ getClassForCorrelation
                                                 this.data.HISTCMP_CORREL}}">{{this.data.HISTCMP_CORREL}}</td>
-                                        <td>{{this.data.HISTCMP_CHISQR}}</td>
-                                        <td>{{this.data.HISTCMP_INTERSECT}}</td>
-                                        <td>{{this.data.HISTCMP_BHATTACHARYYA}}</td>
+                                        <td class="text-white {{getClassForChi
+                                                this.data.HISTCMP_CHISQR}}">{{this.data.HISTCMP_CHISQR}}</td>
+                                        <td class="text-white {{getClassForIntersect
+                                                this.data.HISTCMP_INTERSECT}}">{{this.data.HISTCMP_INTERSECT}}</td>
+                                        <td class="text-white {{getClassForBhat
+                                                this.data.HISTCMP_BHATTACHARYYA}}">{{this.data.HISTCMP_BHATTACHARYYA}}</td>
                                     </tr>
                                 {{/each}}
                                 </tbody>
