@@ -49,7 +49,9 @@ for f_image in first_images:
 
         result = {
             "firstImageId": f_image["_id"],
+            "firstImageUrl": f_image["url"],
             "secondImageId": s_image["_id"],
+            "secondImageUrl": s_image["url"],
             "data": {}
         }
 

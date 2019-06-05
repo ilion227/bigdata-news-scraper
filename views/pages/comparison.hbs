@@ -37,8 +37,10 @@
                                 <tbody>
                                 {{#each comparison.comparisons}}
                                     <tr>
-                                        <td>{{this.firstImageId}}</td>
-                                        <td>{{this.secondImageId}}</td>
+                                        <td><img height="100" width="100" src="{{this.firstImageUrl}}"
+                                                 alt="{{this.firstImageId}}"/></td>
+                                        <td><img height="100" width="100" src="{{this.secondImageUrl}}"
+                                                 alt="{{this.firstImageId}}"/></td>
                                         <td class="text-white {{ getClassForCorrelation
                                                 this.data.HISTCMP_CORREL}}">{{this.data.HISTCMP_CORREL}}</td>
                                         <td class="text-white {{getClassForChi
