@@ -1,5 +1,47 @@
 let articlesTable = null;
 $(document).ready(() => {
+
+	$('#first_article').on('change', () => {
+		let $firstArticleContainer = $('div.first_article_container').empty();
+		let $selectedOption = $('#first_article :selected');
+
+		let title = $selectedOption.data('title');
+		let id = $selectedOption.val();
+
+		let anchorElement = `<a href="/articles/${id}" target="_blank">${title}</a>`;
+
+		$firstArticleContainer.append(anchorElement);
+
+		console.log('Changed first article!');
+	});
+
+	$('#second_article').on('change', () => {
+		let $secondArticleContainer = $('div.second_article_container').empty();
+		let $selectedOption = $('#second_article :selected');
+
+		let title = $selectedOption.data('title');
+		let id = $selectedOption.val();
+
+		let anchorElement = `<a href="/articles/${id}" target="_blank">${title}</a>`;
+
+		$secondArticleContainer.append(anchorElement);
+
+		console.log('Changed second article!');
+	});
+
+	$('#startCompare').on('click', () => {
+		let firstArticleId = $('#first_article :selected').val();
+		let secondArticleId = $('#second_article :selected').val();
+
+		if (firstArticleId.length === null || secondArticleId === null) {
+			alert('Please select both articles!');
+			return;
+		}
+		$.post('/articles/compare/features', {first_article_id: firstArticleId, second_article_id: secondArticleId}).then((res) => {
+			console.log('started comparison',res);
+		});
+	});
+
 	$('.run-scraper').on('click', () => {
 		$.get('/scraper/pages').then(() => {
 			console.log('loaded scraper!');

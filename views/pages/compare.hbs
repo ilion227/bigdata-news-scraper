@@ -8,7 +8,37 @@
     <div class="card shadow my-4">
 
         <div class="card-body">
-
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4>First article</h4>
+                            <select class="form-control" name="first_article_id" id="first_article">
+                                {{#each articles}}
+                                    <option data-title="{{this.title}}" value="{{this._id}}">{{formatDate this.createdAt}} - {{this.title}}</option>
+                                {{/each}}
+                            </select>
+                            <div class="first_article_container"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4>Second article</h4>
+                            <select class="form-control" name="second_article_id" id="second_article">
+                                {{#each articles}}
+                                    <option data-title="{{this.title}}" value="{{this._id}}">{{formatDate this.createdAt}} - {{this.title}}</option>
+                                {{/each}}
+                            </select>
+                            <div class="second_article_container"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12 my-4">
+                    <button class="btn btn-primary btn-block" id="startCompare">Compare</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>

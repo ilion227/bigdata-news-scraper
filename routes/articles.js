@@ -15,11 +15,31 @@ router.get('/fetch', async function(req, res, next) {
 	});
 });
 
-
 router.get('/compare', async function(req, res, next) {
-		const articles = await Article.find({}).exec();
+	const articles = await Article.find({images: {$exists: true, $ne: []}}).exec();
 
-		res.render('pages/compare', {layout: 'single', articles});
+	res.render('pages/compare', {layout: 'single', articles});
+});
+
+router.get('/:id', async function(req, res, next) {
+	const article = await Article.findById(req.params.id).exec();
+
+	res.render('pages/article', {layout: 'single', article});
+});
+
+router.post('/compare/features', async function(req, res, next) {
+
+	let {first_article_id, second_article_id} = req.body;
+
+	PythonShell.PythonShell.run(__dirname + '/../external/test_compare.py',
+			{pythonOptions: ['-u'], args: [first_article_id,second_article_id]},
+			function(err, results) {
+				if (err) throw err;
+
+				console.log('results: %j', results);
+			});
+
+	res.json({'status': 'Comparing', first_article_id, second_article_id});
 });
 
 router.get('/:id', async function(req, res, next) {
