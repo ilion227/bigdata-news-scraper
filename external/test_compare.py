@@ -1,3 +1,4 @@
+import datetime
 import sys
 
 import cv2 as cv
@@ -34,6 +35,10 @@ results = []
 
 for f_image in first_images:
     for s_image in second_images:
+
+        if len(f_image["features"]["hog"]) < 4 or len(s_image["features"]["hog"]) < 4:
+            continue
+
         first_image_data = np.array(f_image["features"]["hog"]["values"], dtype=float)
         second_image_data = np.array(s_image["features"]["hog"]["values"], dtype=float)
 
@@ -52,14 +57,18 @@ for f_image in first_images:
             compare = cv.compareHist(first_image_data, second_image_data, index)
             result["data"][comparison_method] = compare
 
-        results.insert(len(results),result)
+        results.insert(len(results), result)
 
 comparison = {
+    "firstArticleTitle": first_article["title"],
     "firstArticleId": first_article_id,
+    "secondArticleTitle": second_article["title"],
     "secondArticleId": second_article_id,
-    "comparisons": results
+    "comparisons": results,
+    "createdAt": datetime.datetime.utcnow(),
+    "updatedAt": datetime.datetime.utcnow()
 }
 
 x = comparisons_collection.insert_one(comparison)
 
-print(comparison)
+print("Done comparing")

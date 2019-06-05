@@ -1,8 +1,10 @@
 const mongoose = require('mongoose');
 
 const comparisonSchema = new mongoose.Schema({
-	firstArticleId: ObjectId,
-	secondArticleId: ObjectId,
+	firstArticleTitle: String,
+	firstArticleId: mongoose.SchemaTypes.ObjectId,
+	secondArticleTitle: String,
+	secondArticleId: mongoose.SchemaTypes.ObjectId,
 	comparisons: Array,
 }, {timestamps: true});
 

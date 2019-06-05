@@ -1,0 +1,29 @@
+<div class="card shadow">
+    <div class="card-header border-0">
+        <h1>Comparisons</h1>
+    </div>
+</div>
+
+<div class="card shadow my-4">
+    <div class="card-header bg-gradient-primary"></div>
+    <div class="card-body">
+        <table class="table table-striped table-bordered dt-responsive" id="comparisonsTable">
+            <thead>
+            <tr>
+                <th>First Article Id</th>
+                <th>Second Article Id</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{#each comparisons}}
+                <tr>
+                    <td><a target="_blank" href="/articles/{{this.firstArticleId}}">{{this.firstArticleTitle}}</a></td>
+                    <td><a target="_blank" href="/articles/{{this.secondArticleId}}">{{this.secondArticleTitle}}</a></td>
+                    <td><a class="badge badge-info badge-pill" href="/comparisons/{{this._id}}">View</a></td>
+                </tr>
+            {{/each}}
+            </tbody>
+        </table>
+    </div>
+</div>

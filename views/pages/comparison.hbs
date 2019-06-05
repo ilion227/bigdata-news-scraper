@@ -1,0 +1,57 @@
+<div id="single-article">
+    <div class="card shadow">
+        <div class="card-header border-0 clearfix">
+            <div class="row">
+                <div class="col-md-3">
+                    <span class="p-3 badge badge-lg bg-gradient-blue text-white font-weight-500 text-capitalize">#{{comparison.id}}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow my-4">
+
+        <div class="card-body">
+            <small class="text-muted">{{comparison.createdAt}}</small>
+
+            <div>
+                <div class="card shadow my-4">
+                    <div class="card-header bg-gradient-indigo text-white clearfix">
+                        <div class="float-left">
+                            <span>Compared images</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <table class="table table-bordered">
+                                <thead>
+                                <tr>
+                                    <th width="25%">First Image ID</th>
+                                    <th width="25%">Second Image ID</th>
+                                    <th width="10%">HISTCMP_CORREL</th>
+                                    <th width="10%">HISTCMP_CHISQR</th>
+                                    <th width="10%">HISTCMP_INTERSECT</th>
+                                    <th width="10%">HISTCMP_BHATTACHARYYA</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {{#each comparison.comparisons}}
+                                    <tr>
+                                        <td>{{this.firstImageId}}</td>
+                                        <td>{{this.secondImageId}}</td>
+                                        <td class="text-white {{ getClassForCorrelation
+                                                this.data.HISTCMP_CORREL}}">{{this.data.HISTCMP_CORREL}}</td>
+                                        <td>{{this.data.HISTCMP_CHISQR}}</td>
+                                        <td>{{this.data.HISTCMP_INTERSECT}}</td>
+                                        <td>{{this.data.HISTCMP_BHATTACHARYYA}}</td>
+                                    </tr>
+                                {{/each}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

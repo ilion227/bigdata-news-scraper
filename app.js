@@ -9,6 +9,7 @@ const hbs = require('express-handlebars');
 const hbsHelpers = require('./public/javascripts/helpers.js');
 
 const dashboardRouter = require('./routes/dashboard');
+const comparisonsRouter = require('./routes/comparisons');
 const websitesRouter = require('./routes/websites');
 const articlesRouter = require('./routes/articles');
 const usersRouter = require('./routes/users');
@@ -40,6 +41,7 @@ app.use(
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/dashboard', dashboardRouter);
+app.use('/comparisons', comparisonsRouter);
 app.use('/articles', articlesRouter);
 app.use('/websites', websitesRouter);
 app.use('/users', usersRouter);
