@@ -27,6 +27,9 @@ const articleSchema = new mongoose.Schema({
 		thumbnailTag: String,
 		thumbnailDescription: String,
 	},
+	processed: {
+		title: String,
+	},
 }, {timestamps: true});
 
 module.exports = mongoose.model('Article', articleSchema, 'articles');

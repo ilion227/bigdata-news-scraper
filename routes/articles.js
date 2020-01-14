@@ -80,8 +80,32 @@ router.get('/machine-learning', async function(req, res, next) {
 router.get('/:id', async function(req, res, next) {
 	const article = await Article.findById(req.params.id).exec();
 
+	/*
+	let processed = {};
+
+	let title = article.title.split(' ');
+
+	title = await Promise.all(title.map(async (word) => {
+		let regex = /[.,\s]/g;
+		word = word.replace(regex, '');
+
+		const replacement = await Replacement.findOne({'key': word}).exec();
+
+		if (replacement) {
+			console.log(replacement);
+			word = replacement.replacement;
+		}
+		console.log('Returning', word);
+		return word;
+	}));
+
+	processed.title = title.join(" ");
+	 */
+
 	res.render('pages/article', {layout: 'single', article});
 });
+
+
 
 router.post('/compare/features', async function(req, res, next) {
 

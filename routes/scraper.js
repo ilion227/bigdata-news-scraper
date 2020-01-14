@@ -6,6 +6,7 @@ const {Cluster} = require('puppeteer-cluster');
 
 const Article = require('../models/Article');
 const Website = require('../models/Website');
+const Replacement = require('../models/Replacement');
 
 const config = require('../config');
 
@@ -86,6 +87,22 @@ router.get('/pages', async function(req, res) {
 				}
 			}
 
+			let processed = {};
+
+			let processedTitle = entry.title.split(' ');
+
+			processedTitle = await Promise.all(processedTitle.map(async (word) => {
+				let regex = /[.,\s]/g;
+				word = word.replace(regex, '');
+
+				const replacement = await Replacement.findOne({'key': word}).exec();
+
+				if (replacement) {
+					word = replacement.replacement;
+				}
+				return word;
+			}));
+
 			let article = new Article({
 				site: website.title,
 				url: entry.link,
@@ -96,6 +113,9 @@ router.get('/pages', async function(req, res) {
 				tags: tags,
 				summary: summary,
 				images: images,
+				processed: {
+					title: processedTitle.join(' '),
+				},
 			});
 			articles.push(article);
 
@@ -105,7 +125,7 @@ router.get('/pages', async function(req, res) {
 			});
 
 		} catch (err) {
-			console.log(`An error occured on url: ${entry.link}`);
+			console.log(`An error occured on url: ${entry.link}, ${err}`);
 		} finally {
 			await page.close();
 		}
