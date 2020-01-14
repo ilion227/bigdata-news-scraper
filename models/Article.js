@@ -7,6 +7,7 @@ const articleSchema = new mongoose.Schema({
 	summary: String,
 	url: String,
 	mainImage: String,
+	type: String,
 	generatedFeatures: {type: Boolean, default: false},
 	images: [
 		{

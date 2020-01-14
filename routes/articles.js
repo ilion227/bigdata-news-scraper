@@ -7,6 +7,9 @@ var PythonShell = require('python-shell');
 var express = require('express');
 var router = express.Router();
 
+// Serial Port
+const SerialPort = require('serialport');
+
 const fs = require('fs'),
 		path = require('path'),
 		util = require('util'),
@@ -80,32 +83,33 @@ router.get('/machine-learning', async function(req, res, next) {
 router.get('/:id', async function(req, res, next) {
 	const article = await Article.findById(req.params.id).exec();
 
-	/*
-	let processed = {};
-
-	let title = article.title.split(' ');
-
-	title = await Promise.all(title.map(async (word) => {
-		let regex = /[.,\s]/g;
-		word = word.replace(regex, '');
-
-		const replacement = await Replacement.findOne({'key': word}).exec();
-
-		if (replacement) {
-			console.log(replacement);
-			word = replacement.replacement;
-		}
-		console.log('Returning', word);
-		return word;
-	}));
-
-	processed.title = title.join(" ");
-	 */
-
 	res.render('pages/article', {layout: 'single', article});
 });
 
+router.get('/:id/send-serial', async function(req, res, next) {
+	const article = await Article.findById(req.params.id).exec();
 
+	const port = new SerialPort('COM5', function(err) {
+		if (err) {
+			return res.json({message: 'Failed to open serial port.', error: err});
+		}
+	});
+
+	let value = ['good', 'neutral', 'bad'][Math.floor((Math.random() * 3))];
+
+	port.write(`${value}\n`, function(err) {
+		if (err) {
+			return res.json({message: 'Failed to send to serial.', error: err});
+		}
+
+		port.close();
+		return res.json({message: `Sent "${value}" to serial.`});
+	});
+
+	if (port.isOpen) {
+		port.close();
+	}
+});
 
 router.post('/compare/features', async function(req, res, next) {
 

@@ -7,5 +7,6 @@
     <orderEntry type="library" name="@types/express" level="application" />
     <orderEntry type="library" name="@types/mongoose" level="application" />
     <orderEntry type="library" name="jquery" level="application" />
+    <orderEntry type="library" name="serialport" level="project" />
   </component>
 </module>

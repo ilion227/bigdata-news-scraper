@@ -37,14 +37,31 @@ $(document).ready(() => {
 			alert('Please select both articles!');
 			return;
 		}
-		$.post('/articles/compare/features', {first_article_id: firstArticleId, second_article_id: secondArticleId}).then((res) => {
-			console.log('started comparison',res);
-		});
+		$.post('/articles/compare/features', {first_article_id: firstArticleId, second_article_id: secondArticleId}).
+				then((res) => {
+					console.log('started comparison', res);
+				});
 	});
 
 	$('.run-scraper').on('click', () => {
 		$.get('/scraper/pages').then(() => {
 			console.log('loaded scraper!');
+		});
+	});
+
+	$('.send-to-board').on('click', function() {
+
+		let $el = $(this);
+		$el.find('span').hide();
+		$el.find('.loader').show();
+
+		let id = $el.data('article-id');
+		$.get(`/articles/${id}/send-serial`).then((data) => {
+			console.log('sent to serial!', data);
+			$el.find('span').show();
+			$el.find('.loader').hide();
+
+			$el.parent().find(".message").text(data.message);
 		});
 	});
 

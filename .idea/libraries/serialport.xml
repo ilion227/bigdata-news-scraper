@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="serialport" type="javaScript">
+    <properties>
+      <sourceFilesUrls>
+        <item url="file://$PROJECT_DIR$/node_modules/@serialport" />
+      </sourceFilesUrls>
+    </properties>
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/node_modules/@serialport" />
+    </CLASSES>
+    <SOURCES />
+  </library>
+</component>
