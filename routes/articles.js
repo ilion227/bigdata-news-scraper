@@ -1,9 +1,16 @@
 const Article = require('../models/Article');
+const Replacement = require('../models/Replacement');
+
 const ObjectId = require('mongoose').Types.ObjectId;
 
 var PythonShell = require('python-shell');
 var express = require('express');
 var router = express.Router();
+
+const fs = require('fs'),
+		path = require('path'),
+		util = require('util'),
+		parse = require('csv-parse');
 
 router.get('/', async function(req, res, next) {
 	res.render('pages/articles', {layout: 'single'});
@@ -20,6 +27,54 @@ router.get('/compare', async function(req, res, next) {
 	const articles = await Article.find({images: {$exists: true, $ne: []}, generatedFeatures: true}).exec();
 
 	res.render('pages/compare', {layout: 'single', articles});
+});
+
+router.get('/machine-learning', async function(req, res, next) {
+
+	let lines = [];
+	let content = null;
+	fs.readFile(path.join(__dirname, '/../external', 'wfl_sl.csv'), 'utf16le', function(err, data) {
+		if (err) {
+			console.log(err);
+			res.json({message: 'Failed to open file', error: err});
+			return;
+		}
+		console.log('Read ' + data.length + ' characters.');
+
+		parse(data, {delimiter: ',', columns: ['key', 'replacement', 'info']}, function(err, output) {
+			if (err) {
+				console.log(err);
+				res.json({message: 'Failed to parse', error: err});
+				return;
+			}
+
+			let replacements = [];
+
+			Replacement.deleteMany({}, function(err) {
+				if (err) {
+					console.log(err);
+				} else {
+					console.log('Removed all replacements from MongoDB');
+				}
+			});
+
+			output.forEach(function(line) {
+				let replacement = new Replacement({
+					key: line.key,
+					replacement: line.replacement,
+					info: line.info,
+				});
+				replacements.push(replacement);
+			});
+
+			Replacement.insertMany(replacements).then((result) => {
+				console.log('success inserting');
+				res.json({message: 'Success', data: {count: result.length}});
+			}).catch(err => {
+				console.error('error inserting', err);
+			});
+		});
+	});
 });
 
 router.get('/:id', async function(req, res, next) {
