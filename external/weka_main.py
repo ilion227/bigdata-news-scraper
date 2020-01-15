@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import sys
 
@@ -11,7 +10,6 @@ from weka.core.converters import Loader
 from weka.core.dataset import Attribute, Instance, Instances
 from weka.filters import Filter
 
-logging.getLogger("weka.core.jvm").disabled = True
 os.environ["_JAVA_OPTIONS"] = "-Dfile.encoding=UTF-8"
 
 if len(sys.argv) < 2:
@@ -25,12 +23,12 @@ db = client["news-scraper"]
 articles_collection = db.articles
 article = articles_collection.find_one({"_id": article_id})
 
-jvm.start(system_cp=True, packages=True)
+jvm.start(system_cp=True, packages=True, max_heap_size="512m")
 
 # Train classifier
 
 loader = Loader(classname="weka.core.converters.ArffLoader", options=["-charset", "UTF-8"])
-train_data = loader.load_file("datasets/train.arff")
+train_data = loader.load_file(os.path.dirname(os.path.realpath(__file__)) + "/datasets/train.arff")
 train_data.class_is_last()
 
 string_to_word_vector_filter = Filter(classname="weka.filters.unsupervised.attribute.StringToWordVector")
@@ -74,3 +72,6 @@ if article_type is 'good' or 'neutral' or 'bad':
 
 result = {"id": str(article_id), "type": article_type}
 print(json.dumps(result))
+
+jvm.stop()
+sys.exit()

@@ -3,7 +3,7 @@ const Replacement = require('../models/Replacement');
 
 const ObjectId = require('mongoose').Types.ObjectId;
 
-var PythonShell = require('python-shell');
+let {PythonShell} = require('python-shell');
 var express = require('express');
 var router = express.Router();
 
@@ -89,21 +89,24 @@ router.get('/:id', async function(req, res, next) {
 router.get('/:id/send-serial', async function(req, res, next) {
 	const article = await Article.findById(req.params.id).exec();
 
+	console.log(article.type, ['good', 'neutral', 'bad'].indexOf(article.type));
+	if (['good', 'neutral', 'bad'].indexOf(article.type) === -1) {
+		return res.json({message: 'Article type missing!'});
+	}
+
 	const port = new SerialPort('COM5', function(err) {
 		if (err) {
 			return res.json({message: 'Failed to open serial port.', error: err});
 		}
 	});
 
-	let value = ['good', 'neutral', 'bad'][Math.floor((Math.random() * 3))];
-
-	port.write(`${value}\n`, function(err) {
+	port.write(`${article.type}\n`, function(err) {
 		if (err) {
 			return res.json({message: 'Failed to send to serial.', error: err});
 		}
 
 		port.close();
-		return res.json({message: `Sent "${value}" to serial.`});
+		return res.json({message: `Sent "${article.type}" to serial.`});
 	});
 
 	if (port.isOpen) {
@@ -111,15 +114,17 @@ router.get('/:id/send-serial', async function(req, res, next) {
 	}
 });
 
-router.get('/:id/process-type', async function(req, res, next) {
+router.get('/:id/process-type', function(req, res, next) {
 
-	PythonShell.PythonShell.run(__dirname + '/../external/weka_main.py',
-			{pythonOptions: ['-u'], args: [req.params.id], mode: 'json'},
-			function(err, results) {
-				if (err) res.json({'message': err, 'success': false});
-				console.log(results);
+	PythonShell.run(__dirname + '/../external/weka_main.py',
+			{pythonOptions: ['-u'], args: [req.params.id]},
+			function(err, data) {
+				if (err) console.log(err);
 
-				res.json({'message': 'Article type has been generated', 'success': true});
+				console.log('results: %j', data);
+				let result = JSON.parse(data);
+
+				res.json({'message': `Article type has been generated: "${result.type}"`, 'success': true});
 			});
 });
 
@@ -127,7 +132,7 @@ router.post('/compare/features', async function(req, res, next) {
 
 	let {first_article_id, second_article_id} = req.body;
 
-	PythonShell.PythonShell.run(__dirname + '/../external/test_compare.py',
+	PythonShell.run(__dirname + '/../external/test_compare.py',
 			{pythonOptions: ['-u'], args: [first_article_id, second_article_id]},
 			function(err, results) {
 				if (err) throw err;
