@@ -111,6 +111,18 @@ router.get('/:id/send-serial', async function(req, res, next) {
 	}
 });
 
+router.get('/:id/process-type', async function(req, res, next) {
+
+	PythonShell.PythonShell.run(__dirname + '/../external/weka_main.py',
+			{pythonOptions: ['-u'], args: [req.params.id], mode: 'json'},
+			function(err, results) {
+				if (err) res.json({'message': err, 'success': false});
+				console.log(results);
+
+				res.json({'message': 'Article type has been generated', 'success': true});
+			});
+});
+
 router.post('/compare/features', async function(req, res, next) {
 
 	let {first_article_id, second_article_id} = req.body;

@@ -61,7 +61,28 @@ $(document).ready(() => {
 			$el.find('span').show();
 			$el.find('.loader').hide();
 
-			$el.parent().find(".message").text(data.message);
+			$el.parent().find('.message').text(data.message);
+		});
+	});
+
+	$('.process-type').on('click', function() {
+
+		let $el = $(this);
+		$el.find('span').hide();
+		$el.find('.loader').show();
+
+		let id = $el.data('article-id');
+		$.get(`/articles/${id}/process-type`).then((data) => {
+			console.log('processing type!', data);
+			$el.find('span').show();
+			$el.find('.loader').hide();
+
+			if (data.success === true) {
+				$el.hide();
+				$('.send-to-board').show();
+			}
+
+			$el.parent().find('.message').text(data.message);
 		});
 	});
 

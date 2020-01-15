@@ -14,13 +14,21 @@
     </div>
 
     <div class="card shadow my-4">
-
         <div class="card-body">
-            <a class="btn btn-default btn-block send-to-board text-white"
+
+            <a {{#unless article.type }}style="display: none;"{{/unless}}
+               class="btn btn-default btn-block send-to-board text-white"
                data-article-id="{{article._id}}">
                 <span class="text">Send to board</span>
                 <img class="loader" style="display: none;" src="/images/loader.svg" alt="Loader"/>
             </a>
+            <a {{#if article.type }}style="display: none;"{{/if}}
+               class="btn btn-default btn-block process-type text-white"
+               data-article-id="{{article._id}}">
+                <span class="text">Process type in WEKA</span>
+                <img class="loader" style="display: none;" src="/images/loader.svg" alt="Loader"/>
+            </a>
+
             <div class="mt-2">
                 <p class="font-weight-500 mb-0 message">&nbsp;</p>
             </div>

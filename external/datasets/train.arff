@@ -1,0 +1,95 @@
+% 1. Title: News Title Compare
+% 
+% 2. Sources:
+%      (a) Creator: Jan Liber
+%      (b) Data source: Various Slovenian news sites
+%      (c) Date: January, 2020
+% 
+% 3. Data:
+%    Instances:    -
+%    Attributes:   -
+%
+%
+@RELATION news
+
+@ATTRIBUTE title string
+@ATTRIBUTE class    {good,neutral,bad}
+
+@DATA
+"Po splet krožiti video v kateri princ Harry lobira za ženin služba",neutral
+"Policisti z uspešen akcija preprečiti da biti 37-letnik izvršil načrtovan umor",good
+"Iranske oblast prijeti osumljenec za sestrelitev ukrajinskega letalo",good
+"Na Poljsko tovornjak prebiti zapornica nato pa on biti zadeti vlak",bad
+"Velikanska luknja pogoltniti avtobus na Kitajsko umreti potnik in pešec",bad
+"Bo slovenski katoliški cerkev ostrejša do pedofil v svoj vrstah?",neutral
+"66-letnik ki naj biti v Istra izsiljevati Slovenc že dolg strah in trepet domačin",bad
+"16-letnica biti sam živeti v Slovenija danes biti nagrajen doktorica znanost",good
+"Filipinske oblast pozivati prebivalec v okolica ognjenika naj se ne vračati dom",neutral
+"Nadiya Bychkova objaviti družinski fotografija",neutral
+"Hilda spet z zdravstvenimi težava na sodišče biti jo zaman čakati",bad
+"Sebastian za 40 rojsten dan dobiti presenečenje ki mu biti vzeti sapa",good
+"Prijateljice za vedno: srečati biti se zvezdnice kulten serija",good
+"Na obala Španija naplavilo jogurtov lonček iz olimpijski igra pred 44 let",neutral
+"Zvezdni prah: najti kar 75 milijarda let star material",neutral
+"Nahranite svoj utrujen možgane!",neutral
+"Mali čudež Benjamin: rodilo se biti mati biti presajen maternica",good
+"Oblak dim ki biti nastati po avstralski požar biti vsaj enkrat obkrožiti Zemlja",bad
+"Barcelona uraden odsloviti Valverdeja nov trener Setien",neutral
+"Kvalifikacije v Melbournu: Dalilo Jakupović zaustaviti gost dim Blaž Kavčič napredoval",good
+"Zakaj odpreti podjetje v BIH?",neutral
+"Test ki biti preveriti kak dober biti vaš prebava",good
+"Zakaj 20 država avtomatski prepoznava registrski tablica Slovenija pa ne?",neutral
+"Več kot 1000 kitajski kamer: prepoznavati obraz tablica cel obnašanje",bad
+"CEDER'S - Brezalkoholni alt-gin novost na slovenski trg",good
+"Kljub ohladitvi in padavina omemba vreden snežen odeja biti pričakovati nikjer",neutral
+"V okolica Radovljica zagoreti gospodarski poslopje povezan biti hiša",bad
+"66-letnik ki naj biti v Istra izsiljevati Slovenc že dolg strah in trepet domačin",bad
+"Velikanska luknja pogoltniti avtobus na Kitajsko umreti potnik in pešec",bad
+"Se vrač Max Biaggi? Uradno potrjen kandidat za sedež pri Aprilii",neutral
+"Z oskar nagrajen režiser Spike Lee na čelo filmski festival v Cannes",good
+"Odšla na Nizozemsko: edin iranski nosilka olimpijski kolajna zbežala iz država",neutral
+"Barcelona uraden odsloviti Valverdeja nov trener Setien",neutral
+"Kvalifikacije v Melbournu: Dalilo Jakupović zaustaviti gost dim Blaž Kavčič napredoval",good
+"Nadiya Bychkova objaviti družinski fotografija",neutral
+"Gašper Rifelj izdati nov pesem kot večen spomin na njegov pokojen babica",good
+"Od malček do najstnika: Kaj biti običajen in kaj ni?",neutral
+"LUNIN KOLEDAR ZA 1412020",neutral
+"Govoreča Tesla: pogovor avtomobil biti pešec postaja realnost",good
+"Rahli in mehek rogljički ki se kar topiti v usta",good
+"Psihologinja razkrivati dober način za premagovanje nespečnost",good
+"Obdavčitev avtomobil po novem: tak biti obračunati davek",neutral
+"Dekleta odhajati kot po tekoč trak šov zapuščati še en tekmovalka",bad
+"Sebastian za 40 rojsten dan dobiti presenečenje ki mu biti vzeti sapa",good
+"UFC 246: McGregor vs Cowboy",neutral
+"Trendi kopalnica 2020",neutral
+"Skoraj ducat vrsta kit in delfin drveti prnovice",bad
+"V hrvaški kampih tudi letos ne biti iti brez podražitevposel-danes",bad
+"Kanadski premier kraljici: Bomo jaz plačati #videotrendi",neutral
+"Znanstveniki odkriti star snov na Zemljinovice",good
+"Pravljična avstrijski ti se duša v poplava turist #videotrendi",bad
+"Našli biti kraj za popoln zimski odkloptrendi",good
+"Odločitev biti padla: oglas o škodljivostidigisvet",neutral
+"Hadžić že iskati skupen jezik z Rudonjo #videosportal",good
+"Znani Slovenec biti ostal brez večina prihranek v delnicahposel-danes",bad
+"Avtobus in potnik pogoltniti luknja: šest mrtev in veliko ranjen #videonovice",bad
+"Barcelona biti odsloviti trener Namesto on prihajati Quique Setiensportal",neutral
+"Besede kapetan ki biti ogreti srcsportal",good
+"Odprl biti duša in kritizirati srbski navijačesportal",neutral
+"Strokovnjaki opozarjajo: led se zaradi visnovice",bad
+"Tramvaj biti odstranilinovice",good
+"Je Beyonce biti ta fotografija namitrendi",neutral
+"Comshop v stečajposel-danes",bad
+"Direktor Tabora naslavljati apel na NZS #videosportal",neutral
+"Blaž Kavčič uspešen skozi prvi krogsportal",good
+"Celjan najti zamenjava za Ferlina prihajati Hrvatsportal",good
+"Čeh zadovoljen Slovenec z nov pogodbosportal",good
+"Iščejo slovenski učitelj za delo v Brusljnovice",neutral
+"Olimpija proti Verbičusportal",neutral
+"Namesto na sneg  na morje",neutral
+"Popestrite svoj TV-program",good
+"Postani NekiNeki",neutral
+"V hrvaški kampih tudi letos ne biti iti brez podražitev",bad
+"Vrtna garnitura in kakovosten vrten pohištvo iz različen material",good
+"VIDEO: Izjava uporabnice krema proti gubicam o kateri govoriti vsi!",neutral
+"Razveselite svoj bližnji",good
+"Razveselite blizek",good

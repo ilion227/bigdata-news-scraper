@@ -1,0 +1,23 @@
+% 1. Title: News Title Compare
+% 
+% 2. Sources:
+%      (a) Creator: Jan Liber
+%      (b) Data source: Various Slovenian news sites
+%      (c) Date: January, 2020
+% 
+% 3. Data:
+%    Instances:    -
+%    Attributes:   -
+%
+%
+@RELATION test
+
+@ATTRIBUTE title string
+@ATTRIBUTE class    {good,neutral,bad}
+
+@DATA
+"Čudež: mati preživeti porod",?
+"Na Poljsko tovornjak prebiti zapornica nato pa on biti zadeti vlak",?
+"Velikanska luknja pogoltniti avtobus na Kitajsko umreti potnik in pešec",?
+"Bo slovenski katoliški cerkev ostrejša do pedofil v svoj vrstah?",?
+"66-letnik ki naj biti v Istra izsiljevati Slovenc že dolg strah in trepet domačin",?

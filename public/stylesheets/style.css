@@ -12829,7 +12829,7 @@ html:not([dir="rtl"]) .noUi-horizontal .noUi-handle {
   height: 300px;
   margin: 0 auto; }
 
-#single-article .send-to-board img.loader {
+#single-article .send-to-board img.loader, #single-article .process-type img.loader {
   height: 20px;
   width: 20px; }
 
